@@ -101,3 +101,25 @@
 - Resolver globale ancora conservativo (ambiguità → nessun edge)
 - Flow reconstructor usa solo edge `calls`, non `imports`
 - `HeuristicExtractor` deprecato ma ancora presente in `extract.rs`
+
+---
+
+## 2026-06-23 — Sessione 5: JSON Schema + validazione CI (branch `feature/json-schema-validation`)
+
+### Completato
+
+- **`schemas/*.schema.json`**: 5 contratti generati da `schemars` sui tipi Rust
+- **`repoctx-schema::json_schema`**: `validate_artifact_json`, `parse_artifact`, `root_schema_for`
+- **Test contratto**: `committed_schemas_match_generated` previene drift schema/codice
+- **Integration test**: `build_outputs_validate_against_json_schema` su tutte le fixture
+- **CI**: step dedicato `cargo test -p repoctx-schema --test schema_validation`
+
+### Verificato
+
+- 23 test totali passano (`cargo test --all`)
+- `cargo clippy` pulito
+
+### Note
+
+- Rigenerare schemi: `cargo test -p repoctx-schema write_schemas -- --ignored --nocapture`
+- Prossimo step consigliato: P0-7 `domain rename` / `domain add`

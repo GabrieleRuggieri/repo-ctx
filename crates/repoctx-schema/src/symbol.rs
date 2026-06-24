@@ -1,9 +1,10 @@
 //! Symbol-related enums shared across artifacts and the index store.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// Kind of symbol extracted from source code.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SymbolKind {
     /// Top-level or nested function.
@@ -21,7 +22,7 @@ pub enum SymbolKind {
 }
 
 /// Visibility of a symbol within its scope.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Visibility {
     /// Public or exported symbol.
@@ -33,7 +34,7 @@ pub enum Visibility {
 }
 
 /// Kind of application entry point.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum EntrypointKind {
     /// Command-line interface entry.

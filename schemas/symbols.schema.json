@@ -1,0 +1,139 @@
+{
+  "$defs": {
+    "SymbolKind": {
+      "description": "Kind of symbol extracted from source code.",
+      "oneOf": [
+        {
+          "const": "function",
+          "description": "Top-level or nested function.",
+          "type": "string"
+        },
+        {
+          "const": "class",
+          "description": "Class, struct, or interface type.",
+          "type": "string"
+        },
+        {
+          "const": "method",
+          "description": "Method on a class or struct.",
+          "type": "string"
+        },
+        {
+          "const": "var",
+          "description": "Variable or constant binding.",
+          "type": "string"
+        },
+        {
+          "const": "type",
+          "description": "Named type alias or typedef.",
+          "type": "string"
+        },
+        {
+          "const": "module",
+          "description": "Module or package boundary.",
+          "type": "string"
+        }
+      ]
+    },
+    "SymbolRecord": {
+      "description": "A single indexed symbol with source location.",
+      "properties": {
+        "endLine": {
+          "description": "1-based end line.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "filePath": {
+          "description": "Repository-relative file path.",
+          "type": "string"
+        },
+        "fqn": {
+          "description": "Fully qualified name.",
+          "type": "string"
+        },
+        "id": {
+          "description": "Stable symbol identifier.",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/SymbolKind",
+          "description": "Symbol kind."
+        },
+        "moduleId": {
+          "description": "Optional module id this symbol belongs to.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "description": "Short name.",
+          "type": "string"
+        },
+        "startLine": {
+          "description": "1-based start line.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "visibility": {
+          "$ref": "#/$defs/Visibility",
+          "description": "Visibility within scope."
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "name",
+        "fqn",
+        "filePath",
+        "startLine",
+        "endLine",
+        "visibility"
+      ],
+      "type": "object"
+    },
+    "Visibility": {
+      "description": "Visibility of a symbol within its scope.",
+      "oneOf": [
+        {
+          "const": "public",
+          "description": "Public or exported symbol.",
+          "type": "string"
+        },
+        {
+          "const": "internal",
+          "description": "Package-private or internal symbol.",
+          "type": "string"
+        },
+        {
+          "const": "private",
+          "description": "Private to enclosing scope.",
+          "type": "string"
+        }
+      ]
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Symbol catalog (`symbols.json`).",
+  "properties": {
+    "schemaVersion": {
+      "description": "SemVer schema version for this artifact.",
+      "type": "string"
+    },
+    "symbols": {
+      "description": "All symbols indexed in the repository.",
+      "items": {
+        "$ref": "#/$defs/SymbolRecord"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "symbols"
+  ],
+  "title": "SymbolsArtifact",
+  "type": "object"
+}

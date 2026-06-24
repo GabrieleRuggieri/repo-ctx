@@ -1,5 +1,6 @@
 //! Versioned JSON artifact document types emitted under `.repoctx/`.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::edge::{BoundaryKind, EdgeType};
@@ -13,7 +14,7 @@ pub trait VersionedArtifact {
 }
 
 /// High-level structural map (`architecture.json`).
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchitectureArtifact {
     /// SemVer schema version for this artifact.
@@ -41,7 +42,7 @@ impl VersionedArtifact for ArchitectureArtifact {
 }
 
 /// A logical module grouping symbols.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct ModuleRecord {
     /// Stable module identifier.
     pub id: String,
@@ -54,7 +55,7 @@ pub struct ModuleRecord {
 }
 
 /// Directed edge between two modules.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct ModuleEdgeRecord {
     /// Source module id.
     pub from: String,
@@ -65,7 +66,7 @@ pub struct ModuleEdgeRecord {
 }
 
 /// Symbol catalog (`symbols.json`).
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SymbolsArtifact {
     /// SemVer schema version for this artifact.
@@ -90,7 +91,7 @@ impl VersionedArtifact for SymbolsArtifact {
 }
 
 /// A single indexed symbol with source location.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SymbolRecord {
     /// Stable symbol identifier.
@@ -115,7 +116,7 @@ pub struct SymbolRecord {
 }
 
 /// Dependency graph (`dependencies.json`).
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct DependenciesArtifact {
     /// SemVer schema version for this artifact.
@@ -140,7 +141,7 @@ impl VersionedArtifact for DependenciesArtifact {
 }
 
 /// A dependency or call edge between two symbols.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct DependencyEdgeRecord {
     /// Stable edge identifier.
@@ -159,7 +160,7 @@ pub struct DependencyEdgeRecord {
 }
 
 /// Reconstructed business flows (`flows.json`).
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct FlowsArtifact {
     /// SemVer schema version for this artifact.
@@ -184,7 +185,7 @@ impl VersionedArtifact for FlowsArtifact {
 }
 
 /// A named execution flow spanning one or more symbols.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct FlowRecord {
     /// Stable flow identifier.
     pub id: String,
@@ -198,7 +199,7 @@ pub struct FlowRecord {
 }
 
 /// One step in a reconstructed flow.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct FlowStepRecord {
     /// Step order (0-based).
     pub order: u32,
@@ -210,7 +211,7 @@ pub struct FlowStepRecord {
 }
 
 /// Detected entry points (`entrypoints.json`).
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct EntrypointsArtifact {
     /// SemVer schema version for this artifact.
@@ -235,7 +236,7 @@ impl VersionedArtifact for EntrypointsArtifact {
 }
 
 /// A detected program entry point.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct EntrypointRecord {
     /// Stable entrypoint identifier.
     pub id: String,

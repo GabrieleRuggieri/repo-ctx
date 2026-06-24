@@ -1,0 +1,142 @@
+{
+  "$defs": {
+    "EdgeType": {
+      "description": "Typed relationship between two symbols.",
+      "oneOf": [
+        {
+          "const": "calls",
+          "description": "Function or method invocation.",
+          "type": "string"
+        },
+        {
+          "const": "imports",
+          "description": "Module or package import.",
+          "type": "string"
+        },
+        {
+          "const": "extends",
+          "description": "Class inheritance.",
+          "type": "string"
+        },
+        {
+          "const": "implements",
+          "description": "Interface or trait implementation.",
+          "type": "string"
+        },
+        {
+          "const": "references",
+          "description": "Generic reference without a stronger kind.",
+          "type": "string"
+        },
+        {
+          "const": "reads",
+          "description": "Read access to a symbol.",
+          "type": "string"
+        },
+        {
+          "const": "writes",
+          "description": "Write access to a symbol.",
+          "type": "string"
+        },
+        {
+          "const": "http",
+          "description": "HTTP client to server edge.",
+          "type": "string"
+        },
+        {
+          "const": "grpc",
+          "description": "gRPC client to server edge.",
+          "type": "string"
+        },
+        {
+          "const": "queue",
+          "description": "Message queue producer to consumer edge.",
+          "type": "string"
+        }
+      ]
+    },
+    "ModuleEdgeRecord": {
+      "description": "Directed edge between two modules.",
+      "properties": {
+        "edge_type": {
+          "$ref": "#/$defs/EdgeType",
+          "description": "Edge classification."
+        },
+        "from": {
+          "description": "Source module id.",
+          "type": "string"
+        },
+        "to": {
+          "description": "Target module id.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "to",
+        "edge_type"
+      ],
+      "type": "object"
+    },
+    "ModuleRecord": {
+      "description": "A logical module grouping symbols.",
+      "properties": {
+        "id": {
+          "description": "Stable module identifier.",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Module classification.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Human-readable module name.",
+          "type": "string"
+        },
+        "symbol_ids": {
+          "description": "Symbol IDs grouped under this module.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "symbol_ids"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "High-level structural map (`architecture.json`).",
+  "properties": {
+    "edges": {
+      "description": "Summary edges between modules.",
+      "items": {
+        "$ref": "#/$defs/ModuleEdgeRecord"
+      },
+      "type": "array"
+    },
+    "modules": {
+      "description": "Logical modules discovered in the repository.",
+      "items": {
+        "$ref": "#/$defs/ModuleRecord"
+      },
+      "type": "array"
+    },
+    "schemaVersion": {
+      "description": "SemVer schema version for this artifact.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "modules",
+    "edges"
+  ],
+  "title": "ArchitectureArtifact",
+  "type": "object"
+}

@@ -1,0 +1,85 @@
+{
+  "$defs": {
+    "FlowRecord": {
+      "description": "A named execution flow spanning one or more symbols.",
+      "properties": {
+        "description": {
+          "description": "Human-readable description.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "description": "Stable flow identifier.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Flow name (e.g. `payment`).",
+          "type": "string"
+        },
+        "steps": {
+          "description": "Ordered steps in the flow.",
+          "items": {
+            "$ref": "#/$defs/FlowStepRecord"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "steps"
+      ],
+      "type": "object"
+    },
+    "FlowStepRecord": {
+      "description": "One step in a reconstructed flow.",
+      "properties": {
+        "external_system": {
+          "description": "External system involved at this step, if any.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "order": {
+          "description": "Step order (0-based).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "symbol_id": {
+          "description": "Referenced symbol id.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "order",
+        "symbol_id"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Reconstructed business flows (`flows.json`).",
+  "properties": {
+    "flows": {
+      "description": "Discovered or configured flows.",
+      "items": {
+        "$ref": "#/$defs/FlowRecord"
+      },
+      "type": "array"
+    },
+    "schemaVersion": {
+      "description": "SemVer schema version for this artifact.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "flows"
+  ],
+  "title": "FlowsArtifact",
+  "type": "object"
+}

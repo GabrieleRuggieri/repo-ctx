@@ -35,5 +35,8 @@ jobs:
       - name: Test
         run: cargo test --all
 
+      - name: Validate JSON Schema contract
+        run: cargo test -p repoctx-schema --test schema_validation
+
       - name: Build release
         run: cargo build --release --bin repoctx

@@ -6,6 +6,7 @@
 pub mod artifacts;
 pub mod edge;
 pub mod error;
+pub mod json_schema;
 pub mod symbol;
 pub mod version;
 
@@ -15,5 +16,8 @@ pub use artifacts::{
 };
 pub use edge::{BoundaryKind, EdgeType};
 pub use error::SchemaError;
+pub use json_schema::{
+    parse_artifact, pretty_schema_for, root_schema_for, validate_artifact_json, ARTIFACT_NAMES,
+};
 pub use symbol::{EntrypointKind, SymbolKind, Visibility};
 pub use version::SCHEMA_VERSION;

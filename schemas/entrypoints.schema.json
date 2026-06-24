@@ -1,0 +1,85 @@
+{
+  "$defs": {
+    "EntrypointKind": {
+      "description": "Kind of application entry point.",
+      "oneOf": [
+        {
+          "const": "cli",
+          "description": "Command-line interface entry.",
+          "type": "string"
+        },
+        {
+          "const": "http",
+          "description": "HTTP route or handler.",
+          "type": "string"
+        },
+        {
+          "const": "cron",
+          "description": "Scheduled cron job.",
+          "type": "string"
+        },
+        {
+          "const": "event",
+          "description": "Event or message consumer.",
+          "type": "string"
+        },
+        {
+          "const": "main",
+          "description": "`main` or program entry.",
+          "type": "string"
+        }
+      ]
+    },
+    "EntrypointRecord": {
+      "description": "A detected program entry point.",
+      "properties": {
+        "id": {
+          "description": "Stable entrypoint identifier.",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/EntrypointKind",
+          "description": "Entry point classification."
+        },
+        "label": {
+          "description": "Optional human label.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "symbol_id": {
+          "description": "Symbol id for the entry point.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "symbol_id",
+        "kind"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Detected entry points (`entrypoints.json`).",
+  "properties": {
+    "entrypoints": {
+      "description": "Entry points indexed in the repository.",
+      "items": {
+        "$ref": "#/$defs/EntrypointRecord"
+      },
+      "type": "array"
+    },
+    "schemaVersion": {
+      "description": "SemVer schema version for this artifact.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "entrypoints"
+  ],
+  "title": "EntrypointsArtifact",
+  "type": "object"
+}

@@ -1,9 +1,10 @@
 //! Graph edge types and cross-service boundary markers.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// Typed relationship between two symbols.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum EdgeType {
     /// Function or method invocation.
@@ -29,7 +30,7 @@ pub enum EdgeType {
 }
 
 /// Boundary crossed by a cross-repo or cross-service edge.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum BoundaryKind {
     /// Network call across service boundary.

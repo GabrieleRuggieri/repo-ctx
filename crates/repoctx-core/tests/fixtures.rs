@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 
 use repoctx_core::{BuildOptions, BuildPipeline};
 use repoctx_query::QueryEngine;
+use repoctx_schema::{validate_artifact_json, ARTIFACT_NAMES};
 
 fn fixture_path(name: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -30,6 +31,35 @@ fn read_artifacts(root: &Path) -> HashMap<String, String> {
         );
     }
     out
+}
+
+fn validate_artifacts(root: &Path) {
+    let artifacts = read_artifacts(root);
+    for name in ARTIFACT_NAMES {
+        let filename = format!("{name}.json");
+        let json = artifacts
+            .get(&filename)
+            .unwrap_or_else(|| panic!("missing {filename}"));
+        validate_artifact_json(name, json)
+            .unwrap_or_else(|e| panic!("{filename} failed schema validation: {e}"));
+    }
+}
+
+#[test]
+fn build_outputs_validate_against_json_schema() {
+    for fixture in ["monorepo-edges", "tiny-rust", "tiny-python", "flows-payment"] {
+        let root = fixture_path(fixture);
+        BuildPipeline::new(
+            &root,
+            BuildOptions {
+                incremental: false,
+                no_embeddings: true,
+            },
+        )
+        .run()
+        .unwrap_or_else(|e| panic!("build {fixture}: {e}"));
+        validate_artifacts(&root);
+    }
 }
 
 #[test]
