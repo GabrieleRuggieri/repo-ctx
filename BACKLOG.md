@@ -8,14 +8,14 @@
 
 | ID | Area | Task | Note |
 |---|---|---|---|
-| P0-1 | Parsing | Integrare **tree-sitter** per Rust, TS/JS, Python, Go, Java | Sostituisce `HeuristicExtractor` |
-| P0-2 | Graph | **Resolver** import/call/extends → popolare tabella `edges` | Prerequisito per impact reale |
-| P0-3 | Graph | **Entrypoint detector** (main, HTTP route heuristics) | Popola `entrypoints.json` |
+| P0-1 | Parsing | Integrare **tree-sitter** per Rust, TS/JS, Python, Go, Java | ✅ v0 su `feature/tree-sitter-parser` |
+| P0-2 | Graph | **Resolver** import/call/extends → popolare tabella `edges` | ✅ call edges v0; import/extends TODO |
+| P0-3 | Graph | **Entrypoint detector** (main, HTTP route heuristics) | ✅ `main` v0 |
 | P0-4 | Flow | **Flow reconstructor** base (clustering call graph + nomi cartelle) | `repoctx flow <domain>` |
 | P0-5 | MCP | Server **rmcp** con `get_context`, `get_impact`, `get_flow`, `get_dependencies` | Interfaccia agenti |
 | P0-6 | Schema | File **JSON Schema** in `schemas/` + validazione in CI | Contratto pubblico testabile |
 | P0-7 | CLI | Comandi `domain rename` / `domain add` | Persistenza in store |
-| P0-8 | Incremental | Fix re-index: eliminare simboli stale quando un file cambia | Oggi si aggiungono senza purge |
+| P0-8 | Incremental | Fix re-index: eliminare simboli stale quando un file cambia | ✅ `delete_symbols_for_path` |
 
 ## P1 — Architettura completa v1
 

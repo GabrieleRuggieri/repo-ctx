@@ -20,9 +20,11 @@ repoctx-cli::main
   └─ commands::execute(Build)
        └─ repoctx-core::BuildPipeline::run
             ├─ FileWalker::discover          # ignore + .repoctxignore
-            ├─ IndexStore::open / file_hash  # incremental skip
-            ├─ HeuristicExtractor::extract   # per-file symbols (→ tree-sitter)
+            ├─ TreeSitterParser::parse_file  # tree-sitter (Rust, Py, TS, JS, Go, Java)
+            ├─ IndexStore::delete_symbols_for_path  # incremental purge
             ├─ IndexStore::insert_symbol
+            ├─ GraphResolver::resolve_calls  # call edges → DB
+            ├─ index_entrypoints (main)      # entrypoints.json
             ├─ IndexStore::export_artifacts
             └─ ArtifactWriter::write_artifact × 5
                  → .repoctx/symbols.json

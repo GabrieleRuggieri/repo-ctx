@@ -27,8 +27,11 @@ pub fn execute(cli: Cli) -> Result<()> {
                 print_json(&report)?;
             } else {
                 println!(
-                    "build complete: {} files, {} symbols → {}",
-                    report.files_parsed, report.symbols_indexed, report.output_dir
+                    "build complete: {} files, {} symbols, {} edges → {}",
+                    report.files_parsed,
+                    report.symbols_indexed,
+                    report.edges_indexed,
+                    report.output_dir
                 );
             }
         }

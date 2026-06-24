@@ -27,6 +27,13 @@ sha2 = "0.10"
 thiserror = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tree-sitter = "0.24"
+tree-sitter-go = "0.23"
+tree-sitter-java = "0.23"
+tree-sitter-javascript = "0.23"
+tree-sitter-python = "0.23"
+tree-sitter-rust = "0.23"
+tree-sitter-typescript = "0.23"
 uuid = { version = "1", features = ["v4", "serde"] }
 
 repoctx-core = { path = "crates/repoctx-core" }

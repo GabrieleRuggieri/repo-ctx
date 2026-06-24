@@ -7,7 +7,9 @@
 pub mod build;
 pub mod error;
 pub mod extract;
+pub mod graph;
 pub mod language;
+pub mod parse;
 pub mod walker;
 
 pub use build::{BuildOptions, BuildPipeline, BuildReport};

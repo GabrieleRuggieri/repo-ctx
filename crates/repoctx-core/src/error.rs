@@ -20,4 +20,8 @@ pub enum CoreError {
     /// Invalid repository root or workspace configuration.
     #[error("invalid repository: {0}")]
     InvalidRepository(String),
+
+    /// Tree-sitter parse failure.
+    #[error("parse error: {0}")]
+    Parse(String),
 }

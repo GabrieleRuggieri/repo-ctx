@@ -183,6 +183,79 @@ impl IndexStore {
         Ok(hash)
     }
 
+    /// Returns the stable file id for a repository-relative path.
+    pub fn file_id(&self, path: &str) -> Result<Option<String>, StoreError> {
+        let id = self
+            .conn
+            .query_row(
+                "SELECT id FROM files WHERE path = ?1",
+                params![path],
+                |row| row.get(0),
+            )
+            .optional()?;
+        Ok(id)
+    }
+
+    /// Removes all symbols (and cascaded edges) for a file path before re-indexing.
+    pub fn delete_symbols_for_path(&self, path: &str) -> Result<(), StoreError> {
+        self.conn.execute(
+            "DELETE FROM symbols WHERE file_id = (SELECT id FROM files WHERE path = ?1)",
+            params![path],
+        )?;
+        Ok(())
+    }
+
+    /// Deletes all dependency edges (rebuilt after each parse pass).
+    pub fn clear_edges(&self) -> Result<(), StoreError> {
+        self.conn.execute("DELETE FROM edges", [])?;
+        Ok(())
+    }
+
+    /// Deletes all entrypoints (rebuilt after each parse pass).
+    pub fn clear_entrypoints(&self) -> Result<(), StoreError> {
+        self.conn.execute("DELETE FROM entrypoints", [])?;
+        Ok(())
+    }
+
+    /// Inserts a dependency edge between two symbols.
+    pub fn insert_edge(
+        &self,
+        edge: &repoctx_schema::artifacts::DependencyEdgeRecord,
+    ) -> Result<(), StoreError> {
+        self.conn.execute(
+            "INSERT OR REPLACE INTO edges
+             (id, src_symbol_id, dst_symbol_id, edge_type, boundary, confidence)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![
+                edge.id,
+                edge.src_symbol_id,
+                edge.dst_symbol_id,
+                edge_type_to_str(edge.edge_type),
+                edge.boundary.map(boundary_to_str),
+                edge.confidence,
+            ],
+        )?;
+        Ok(())
+    }
+
+    /// Inserts a detected entrypoint.
+    pub fn insert_entrypoint(
+        &self,
+        record: &repoctx_schema::artifacts::EntrypointRecord,
+    ) -> Result<(), StoreError> {
+        self.conn.execute(
+            "INSERT OR REPLACE INTO entrypoints (id, symbol_id, kind, label)
+             VALUES (?1, ?2, ?3, ?4)",
+            params![
+                record.id,
+                record.symbol_id,
+                entrypoint_kind_to_str(record.kind),
+                record.label,
+            ],
+        )?;
+        Ok(())
+    }
+
     /// Inserts a symbol row.
     ///
     /// # Errors
@@ -522,6 +595,39 @@ fn str_to_entrypoint_kind(value: &str) -> EntrypointKind {
         "cron" => EntrypointKind::Cron,
         "event" => EntrypointKind::Event,
         _ => EntrypointKind::Main,
+    }
+}
+
+fn entrypoint_kind_to_str(kind: EntrypointKind) -> &'static str {
+    match kind {
+        EntrypointKind::Cli => "cli",
+        EntrypointKind::Http => "http",
+        EntrypointKind::Cron => "cron",
+        EntrypointKind::Event => "event",
+        EntrypointKind::Main => "main",
+    }
+}
+
+fn edge_type_to_str(edge_type: EdgeType) -> &'static str {
+    match edge_type {
+        EdgeType::Calls => "calls",
+        EdgeType::Imports => "imports",
+        EdgeType::Extends => "extends",
+        EdgeType::Implements => "implements",
+        EdgeType::References => "references",
+        EdgeType::Reads => "reads",
+        EdgeType::Writes => "writes",
+        EdgeType::Http => "http",
+        EdgeType::Grpc => "grpc",
+        EdgeType::Queue => "queue",
+    }
+}
+
+fn boundary_to_str(boundary: BoundaryKind) -> &'static str {
+    match boundary {
+        BoundaryKind::Network => "network",
+        BoundaryKind::Queue => "queue",
+        BoundaryKind::SharedLib => "shared_lib",
     }
 }
 
