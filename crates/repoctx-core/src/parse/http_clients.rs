@@ -39,6 +39,33 @@ pub fn detect_http_client_call(
         });
     }
 
+    if matches!(
+        callee_text.as_str(),
+        "http.Get" | "http.Post" | "http.Put" | "http.Delete"
+    ) {
+        let method = callee_text
+            .strip_prefix("http.")
+            .unwrap_or("Get")
+            .to_uppercase();
+        let path = extract_first_string_argument(node, source)?;
+        return Some(ParsedHttpClient {
+            file_path: file_path.to_string(),
+            caller_symbol_id: caller_symbol_id.to_string(),
+            method,
+            path: normalize_path(&path),
+        });
+    }
+
+    if callee_text == "urllib.request.urlopen" {
+        let path = extract_first_string_argument(node, source)?;
+        return Some(ParsedHttpClient {
+            file_path: file_path.to_string(),
+            caller_symbol_id: caller_symbol_id.to_string(),
+            method: "GET".to_string(),
+            path: normalize_path(&extract_path_from_url(&path)),
+        });
+    }
+
     if let Some((method, path)) = parse_member_route_call(&callee_text, node, source) {
         return Some(ParsedHttpClient {
             file_path: file_path.to_string(),
@@ -77,7 +104,10 @@ fn parse_member_route_call(
         _ => return None,
     };
 
-    if !matches!(object, "axios" | "http" | "client" | "req") {
+    if !matches!(
+        object,
+        "axios" | "http" | "client" | "req" | "httpx" | "got" | "superagent"
+    ) {
         return None;
     }
 
@@ -87,11 +117,11 @@ fn parse_member_route_call(
 
 fn parse_requests_call(callee_text: &str, node: Node, source: &[u8]) -> Option<(String, String)> {
     let method = match callee_text {
-        "requests.get" => "GET",
-        "requests.post" => "POST",
-        "requests.put" => "PUT",
-        "requests.delete" => "DELETE",
-        "requests.patch" => "PATCH",
+        "requests.get" | "httpx.get" => "GET",
+        "requests.post" | "httpx.post" => "POST",
+        "requests.put" | "httpx.put" => "PUT",
+        "requests.delete" | "httpx.delete" => "DELETE",
+        "requests.patch" | "httpx.patch" => "PATCH",
         _ => return None,
     };
     let raw = extract_first_string_argument(node, source)?;

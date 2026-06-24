@@ -314,3 +314,22 @@
 
 - `dist plan` elenca artifact per 5 target × 2 binari
 - `cargo test --all` invariato
+
+---
+
+## 2026-06-23 — Sessione 17: Windows CI + cross-repo linker v2 (branch `feature/p14-plus-windows-ci`)
+
+### Completato
+
+- **P2-4 Windows tier-2**: job `windows-tier2` in CI (`continue-on-error`), tier-1 su Ubuntu/macOS
+- **`docs/windows.md`**: policy tier-2, reporting issue, sviluppo locale
+- **P1-4+ Cross-repo linker**:
+  - Rilevamento gRPC (`ServiceStub`, `Register*Server`, …) e queue (`send`/`subscribe`, Kafka/Rabbit)
+  - Contratti manifest `[[contracts.grpc]]` e `[[contracts.queue]]`
+  - HTTP client estesi: `httpx`, `http.Get` (Go), `urllib.request.urlopen`, `got`/`superagent`
+- Fixture `tests/fixtures/workspace-messaging/` + integration test gRPC + queue
+
+### Verificato
+
+- 60 test passano (`REPOCTX_HASH_EMBED=1`)
+- `cargo clippy --all-features` pulito

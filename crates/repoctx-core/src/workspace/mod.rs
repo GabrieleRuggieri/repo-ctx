@@ -14,7 +14,10 @@ use tracing::info;
 
 use crate::build::{BuildOptions, BuildPipeline, BuildReport};
 use crate::error::CoreError;
-use crate::parse::{FileParseResult, ParsedImport, TreeSitterParser};
+use crate::parse::{
+    scan_service_contracts, FileParseResult, ParsedGrpcClient, ParsedGrpcServer, ParsedHttpClient,
+    ParsedImport, ParsedQueueEndpoint, TreeSitterParser,
+};
 use crate::walker::FileWalker;
 
 /// Default workspace manifest file name at the workspace root.
@@ -107,8 +110,17 @@ impl WorkspacePipeline {
 
             info!(repo = %member.name, path = %member.path, "building workspace member");
             let report = BuildPipeline::new(&repo_root, self.options.clone()).run()?;
-            let (http_clients, imports) = collect_http_clients_and_imports(&repo_root)?;
-            let index = load_repo_index(&member.name, &repo_root, http_clients, imports)?;
+            let (http_clients, grpc_clients, grpc_servers, queue_endpoints, imports) =
+                collect_cross_repo_signals(&repo_root)?;
+            let index = load_repo_index(
+                &member.name,
+                &repo_root,
+                http_clients,
+                grpc_clients,
+                grpc_servers,
+                queue_endpoints,
+                imports,
+            )?;
             repo_indexes.push(index);
             repo_reports.push(RepoBuildSummary {
                 name: member.name.clone(),
@@ -163,9 +175,16 @@ fn write_cross_repo_artifact(
     Ok(())
 }
 
-fn collect_http_clients_and_imports(
-    repo_root: &Path,
-) -> Result<(Vec<crate::parse::ParsedHttpClient>, Vec<ParsedImport>), CoreError> {
+/// Signals collected from source for cross-repo linking.
+pub type CrossRepoSignals = (
+    Vec<ParsedHttpClient>,
+    Vec<ParsedGrpcClient>,
+    Vec<ParsedGrpcServer>,
+    Vec<ParsedQueueEndpoint>,
+    Vec<ParsedImport>,
+);
+
+fn collect_cross_repo_signals(repo_root: &Path) -> Result<CrossRepoSignals, CoreError> {
     let walker = FileWalker::new(repo_root);
     let discovered = walker.discover()?;
     let mut parse_cache: HashMap<String, FileParseResult> = HashMap::new();
@@ -177,12 +196,32 @@ fn collect_http_clients_and_imports(
     }
 
     let mut http_clients = Vec::new();
+    let mut grpc_clients = Vec::new();
+    let mut grpc_servers = Vec::new();
+    let mut queue_endpoints = Vec::new();
     let mut imports = Vec::new();
-    for parsed in parse_cache.values() {
+
+    for file in &discovered {
+        let Some(parsed) = parse_cache.get(&file.relative_path) else {
+            continue;
+        };
         http_clients.extend(parsed.http_clients.iter().cloned());
         imports.extend(parsed.imports.iter().cloned());
+
+        let source = std::fs::read_to_string(&file.absolute_path)?;
+        let scan = scan_service_contracts(&file.relative_path, &source, &parsed.symbols);
+        grpc_clients.extend(scan.grpc_clients);
+        grpc_servers.extend(scan.grpc_servers);
+        queue_endpoints.extend(scan.queue_endpoints);
     }
-    Ok((http_clients, imports))
+
+    Ok((
+        http_clients,
+        grpc_clients,
+        grpc_servers,
+        queue_endpoints,
+        imports,
+    ))
 }
 
 /// Returns true when `repoctx.workspace.toml` exists at the given root.

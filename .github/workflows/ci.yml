@@ -11,8 +11,8 @@ env:
   REPOCTX_HASH_EMBED: "1"
 
 jobs:
-  rust:
-    name: Rust (${{ matrix.os }})
+  tier1:
+    name: Tier-1 (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -41,6 +41,23 @@ jobs:
 
       - name: Validate JSON Schema contract
         run: cargo test -p repoctx-schema --test schema_validation
+
+      - name: Build release
+        run: cargo build --release --bin repoctx
+
+  windows-tier2:
+    name: Tier-2 (windows-latest)
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Test
+        run: cargo test --all
 
       - name: Build release
         run: cargo build --release --bin repoctx

@@ -391,3 +391,31 @@ fn workspace_build_links_http_cross_repo_edges() {
     assert!(cross_repo_json.contains("gateway"));
     assert!(cross_repo_json.contains("users"));
 }
+
+#[test]
+fn workspace_build_links_grpc_and_queue_edges() {
+    let work = isolated_fixture("workspace-messaging");
+    let report = WorkspacePipeline::new(
+        &work.root,
+        BuildOptions {
+            incremental: false,
+            no_embeddings: true,
+        },
+    )
+    .run()
+    .expect("workspace build");
+
+    assert_eq!(report.repos.len(), 4);
+    assert!(
+        report.cross_repo_edges >= 2,
+        "expected gRPC and queue cross-repo edges"
+    );
+
+    let cross_repo_path = work.root.join(".repoctx/cross_repo.json");
+    let cross_repo_json = fs::read_to_string(&cross_repo_path).expect("cross_repo.json");
+    repoctx_schema::validate_artifact_json("cross_repo", &cross_repo_json).expect("schema");
+    assert!(cross_repo_json.contains("\"grpc\""));
+    assert!(cross_repo_json.contains("\"queue\""));
+    assert!(cross_repo_json.contains("orders.created"));
+    assert!(cross_repo_json.contains("UserService"));
+}

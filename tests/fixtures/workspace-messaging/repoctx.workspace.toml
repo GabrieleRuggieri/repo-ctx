@@ -1,0 +1,28 @@
+schema_version = "1.0.0"
+name = "messaging-workspace"
+
+[[repos]]
+name = "orders-publisher"
+path = "orders-publisher"
+
+[[repos]]
+name = "orders-consumer"
+path = "orders-consumer"
+
+[[repos]]
+name = "profile-client"
+path = "profile-client"
+
+[[repos]]
+name = "profile-server"
+path = "profile-server"
+
+[[contracts.queue]]
+producer_repo = "orders-publisher"
+consumer_repo = "orders-consumer"
+topic = "orders.created"
+
+[[contracts.grpc]]
+client_repo = "profile-client"
+server_repo = "profile-server"
+service = "UserService"

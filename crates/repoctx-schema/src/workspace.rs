@@ -46,6 +46,12 @@ pub struct WorkspaceContracts {
     /// HTTP client ↔ server contracts.
     #[serde(default)]
     pub http: Vec<HttpContract>,
+    /// gRPC client ↔ server contracts.
+    #[serde(default)]
+    pub grpc: Vec<GrpcContract>,
+    /// Queue/messaging producer ↔ consumer contracts.
+    #[serde(default)]
+    pub queue: Vec<QueueContract>,
     /// Shared library package contracts.
     #[serde(default)]
     pub shared_lib: Vec<SharedLibContract>,
@@ -62,6 +68,28 @@ pub struct HttpContract {
     pub method: String,
     /// Route path (e.g. `/users`).
     pub path: String,
+}
+
+/// Explicit gRPC service contract between two repos.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct GrpcContract {
+    /// Repo that issues outbound gRPC calls.
+    pub client_repo: String,
+    /// Repo that exposes the gRPC service.
+    pub server_repo: String,
+    /// Service name (e.g. `UserService`).
+    pub service: String,
+}
+
+/// Explicit queue/messaging contract between two repos.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct QueueContract {
+    /// Repo that publishes to the topic/queue.
+    pub producer_repo: String,
+    /// Repo that consumes from the topic/queue.
+    pub consumer_repo: String,
+    /// Topic or queue name.
+    pub topic: String,
 }
 
 /// Shared library contract matched by import/package name.

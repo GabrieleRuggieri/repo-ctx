@@ -148,6 +148,8 @@ Maintainers use [cargo-dist](https://axodotdev.github.io/cargo-dist/) — see [p
 git tag v0.1.0 && git push --tags
 ```
 
+CI in `.github/workflows/ci.yml` runs tier-1 checks on Ubuntu and macOS; Windows is tier-2 (see [docs/windows.md](./docs/windows.md)).
+
 CI in `.github/workflows/release.yml` builds binaries and publishes npm/Homebrew artifacts.
 
 ## Architecture decisions
