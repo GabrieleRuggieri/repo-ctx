@@ -36,18 +36,18 @@
 
 | ID | Area | Task | Note |
 |---|---|---|---|
-| P1-8 | Wiki | Modello pagina + frontmatter + `wiki/index.md` auto-generato da tassonomia grafo | module \| service \| flow \| concept |
-| P1-8b | Wiki | **Template a slot** — sezioni grafo compilate, slot prosa per LLM | Differenziatore vs gist |
-| P1-8c | Wiki | **Claim blocks** `<!-- repoctx:claim ... -->` + parser lint | Lint senza LLM |
-| P1-9 | Wiki | Graph-grounded ingest via MCP sampling (sottografo nel prompt) | Solo pagine stale/new |
-| P1-9b | Wiki | **Coda sync su `build --watch`** quando fingerprint cambia | Manutenzione automatica |
-| P1-10 | Wiki | Wiki lint deterministico (stale, claims, link, orphan) → `wiki_lint.json` | Exit code per CI |
+| P1-8 | Wiki | Modello pagina + frontmatter + `wiki/index.md` auto-generato da tassonomia grafo | ✅ |
+| P1-8b | Wiki | **Template a slot** — sezioni grafo compilate, slot prosa per LLM | ✅ |
+| P1-8c | Wiki | **Claim blocks** `<!-- repoctx:claim ... -->` + parser lint | ✅ |
+| P1-9 | Wiki | Graph-grounded ingest via MCP sampling (sottografo nel prompt) | ✅ `get_wiki enrich` |
+| P1-9b | Wiki | **Coda sync su `build --watch`** quando fingerprint cambia | ✅ avviso stale post-build |
+| P1-10 | Wiki | Wiki lint deterministico (stale, claims, link, orphan) → `wiki_lint.json` | ✅ `wiki lint --strict` |
 | P1-11 | Context | **Context Assembly** + packing greedy a `--budget` | ✅ |
 | P1-11b | Context | **`--format md`** default + `--task fix\|refactor\|onboard` | ✅ CLI + MCP |
-| P1-12 | MCP/CLI | `wiki sync\|lint\|show`, `get_wiki`, `get_context` → bundle completo | MCP markdown field |
-| P1-13 | Schema | `ContextBundle`, `WikiPage`, validazione artifact | Test integrazione |
-| P1-14 | Bench | Budget test: bundle quality su fixture `flows-payment` + `bench-small` | Regressione qualità |
-| P1-15 | Release | Tag **v0.2.0** con Knowledge Layer | Dopo P1-11b + P1-10 |
+| P1-12 | MCP/CLI | `wiki sync\|lint\|show`, `get_wiki`, `get_context` → bundle completo | ✅ |
+| P1-13 | Schema | `ContextBundle`, `WikiPage`, validazione artifact | ✅ `wiki_lint` / `wiki_stale` |
+| P1-14 | Bench | Budget test: bundle quality su fixture `flows-payment` + `bench-small` | ✅ test integrazione |
+| P1-15 | Release | Tag **v0.2.0** con Knowledge Layer | Da taggare |
 
 ## P1 — Architettura v1 (completato)
 
@@ -75,11 +75,9 @@
 
 ## Prossimo consigliato (ordine adozione)
 
-1. **P1-R1 + P1-R2 + P1-R3** — v0.1 usabile da agenti oggi (impact, flow, MCP)
-2. **P1-11 + P1-11b** — context bundle markdown (valore immediato bug fix)
-3. **P1-8 + P1-8b + P1-8c** — wiki compilata, non libera
-4. **P1-9b + P1-10** — watch + lint (qualità nel tempo)
-5. **P1-15** — release v0.2.0
+1. **P1-15** — tag v0.2.0 + release notes Knowledge Layer
+2. **P1-R1 + P1-R2 + P1-R3** — v0.1 adozione (se non già fatto)
+3. **P2-5 / P2-6** — wiki router ibrido e semantic lint (scala)
 
 ---
 

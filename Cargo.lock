@@ -2623,7 +2623,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "repoctx-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -2635,13 +2635,14 @@ dependencies = [
  "repoctx-store",
  "serde",
  "serde_json",
+ "toml",
  "tracing",
  "tracing-subscriber",
 ]
 
 [[package]]
 name = "repoctx-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "ignore",
@@ -2668,7 +2669,7 @@ dependencies = [
 
 [[package]]
 name = "repoctx-embed"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "dirs",
  "fastembed",
@@ -2679,7 +2680,7 @@ dependencies = [
 
 [[package]]
 name = "repoctx-mcp"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "repoctx-core",
@@ -2691,13 +2692,14 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "toml",
  "tracing",
  "tracing-subscriber",
 ]
 
 [[package]]
 name = "repoctx-query"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "repoctx-core",
@@ -2713,7 +2715,7 @@ dependencies = [
 
 [[package]]
 name = "repoctx-schema"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "jsonschema",
  "schemars",
@@ -2725,7 +2727,7 @@ dependencies = [
 
 [[package]]
 name = "repoctx-store"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "repoctx-schema",

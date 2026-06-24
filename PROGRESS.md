@@ -390,4 +390,25 @@ Documentazione allineata a **cosa funziona oggi** (impact, flow, MCP) e **north 
 
 ### Prossimo step
 
-- P1-8 (wiki page model) → P1-9/P1-10 (wiki sync + lint)
+- P1-15 — tag v0.2.0
+
+---
+
+## 2026-06-25 — Sessione 21: Knowledge Layer wiki v0.2 (P1-8 … P1-14)
+
+### Completato
+
+- **Schema wiki** (`WikiPage`, `WikiLintArtifact`, `WikiStaleQueue`) + JSON Schema in `schemas/`
+- **`WikiCompiler`**: pagine flow/module/service da grafo, `index.md`, claim blocks + prose slot
+- **`WikiLinter`**: stale fingerprint, claim errors, broken links, orphans → `wiki_lint.json` + `wiki_stale.json`
+- **Build**: compila wiki + lint dopo emit artifact; `wiki_pages_indexed` in `BuildReport`
+- **CLI** `wiki sync|lint|show` (+ `--strict` per CI)
+- **MCP** `get_wiki` con `enrich=true` per prose slot via sampling
+- **Context assembly**: sezione `## Wiki` nel bundle markdown quando simbolo ancorato
+- **`build --watch`**: avviso pagine stale in coda dopo rebuild
+- **Bump** workspace `0.2.0`
+- Test integrazione wiki + context su fixture `flows-payment`
+
+### Verificato
+
+- `cargo test --all` verde

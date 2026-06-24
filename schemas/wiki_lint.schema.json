@@ -1,0 +1,84 @@
+{
+  "$defs": {
+    "WikiClaimError": {
+      "description": "A machine-readable claim that failed verification.",
+      "properties": {
+        "claim": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "page_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "page_id",
+        "claim",
+        "message"
+      ],
+      "type": "object"
+    },
+    "WikiLinkError": {
+      "description": "A broken `see_also` or inline wiki link.",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "page_id": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "page_id",
+        "target",
+        "message"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`wiki_lint.json` — deterministic lint report.",
+  "properties": {
+    "brokenLinks": {
+      "items": {
+        "$ref": "#/$defs/WikiLinkError"
+      },
+      "type": "array"
+    },
+    "claimErrors": {
+      "items": {
+        "$ref": "#/$defs/WikiClaimError"
+      },
+      "type": "array"
+    },
+    "orphanPageIds": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "schemaVersion": {
+      "type": "string"
+    },
+    "stalePageIds": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "stalePageIds",
+    "claimErrors",
+    "brokenLinks",
+    "orphanPageIds"
+  ],
+  "title": "WikiLintArtifact",
+  "type": "object"
+}
