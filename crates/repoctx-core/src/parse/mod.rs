@@ -3,5 +3,6 @@
 mod tree_sitter;
 
 pub use tree_sitter::{
-    FileParseResult, ParsedCall, ParsedEntrypoint, ParsedImport, TreeSitterParser,
+    FileParseResult, ParsedCall, ParsedEntrypoint, ParsedImport, ParsedInheritance,
+    TreeSitterParser,
 };

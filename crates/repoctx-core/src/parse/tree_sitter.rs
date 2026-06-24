@@ -3,6 +3,7 @@
 use std::path::Path;
 
 use repoctx_schema::artifacts::SymbolRecord;
+use repoctx_schema::edge::EdgeType;
 use repoctx_schema::symbol::{EntrypointKind, SymbolKind, Visibility};
 use tree_sitter::{Language, Node, Parser};
 
@@ -37,6 +38,17 @@ pub struct ParsedImport {
     pub imported_name: String,
 }
 
+/// An unresolved inheritance edge (extends / implements).
+#[derive(Debug, Clone)]
+pub struct ParsedInheritance {
+    /// Child symbol id at parse time (remapped during build).
+    pub child_symbol_id: String,
+    /// Parent type or trait name.
+    pub parent_name: String,
+    /// Extends or implements.
+    pub edge_type: EdgeType,
+}
+
 /// Symbols and relationships extracted from one source file.
 #[derive(Debug, Clone, Default)]
 pub struct FileParseResult {
@@ -48,6 +60,8 @@ pub struct FileParseResult {
     pub calls: Vec<ParsedCall>,
     /// Unresolved import edges declared in this file.
     pub imports: Vec<ParsedImport>,
+    /// Unresolved extends/implements edges.
+    pub inheritance: Vec<ParsedInheritance>,
     /// Detected entrypoints.
     pub entrypoints: Vec<ParsedEntrypoint>,
 }
@@ -94,6 +108,7 @@ impl TreeSitterParser {
             symbols: ctx.symbols,
             calls: ctx.calls,
             imports: ctx.imports,
+            inheritance: ctx.inheritance,
             entrypoints: ctx.entrypoints,
         })
     }
@@ -104,6 +119,7 @@ struct ParseContext {
     symbols: Vec<SymbolRecord>,
     calls: Vec<ParsedCall>,
     imports: Vec<ParsedImport>,
+    inheritance: Vec<ParsedInheritance>,
     entrypoints: Vec<ParsedEntrypoint>,
     scope_stack: Vec<String>,
 }
@@ -115,6 +131,7 @@ impl ParseContext {
             symbols: Vec::new(),
             calls: Vec::new(),
             imports: Vec::new(),
+            inheritance: Vec::new(),
             entrypoints: Vec::new(),
             scope_stack: Vec::new(),
         }
@@ -167,6 +184,14 @@ impl ParseContext {
             callee_name: callee_name.to_string(),
         });
     }
+
+    fn record_inheritance(&mut self, child_id: &str, parent_name: &str, edge_type: EdgeType) {
+        self.inheritance.push(ParsedInheritance {
+            child_symbol_id: child_id.to_string(),
+            parent_name: parent_name.to_string(),
+            edge_type,
+        });
+    }
 }
 
 fn walk_node(node: Node, source: &[u8], ctx: &mut ParseContext) {
@@ -184,10 +209,17 @@ fn walk_node(node: Node, source: &[u8], ctx: &mut ParseContext) {
         }
         "struct_item" | "class_definition" | "class_declaration" => {
             if let Some(name) = node_child_identifier(node, source, &["name", "declarator"]) {
-                ctx.push_symbol(&name, SymbolKind::Class, node, Visibility::Public);
+                let id = ctx.push_symbol(&name, SymbolKind::Class, node, Visibility::Public);
+                record_type_inheritance(node, source, &id, ctx);
+            }
+        }
+        "trait_item" | "interface_declaration" => {
+            if let Some(name) = node_child_identifier(node, source, &["name", "declarator"]) {
+                ctx.push_symbol(&name, SymbolKind::Type, node, Visibility::Public);
             }
         }
         "impl_item" => {
+            record_rust_impl_inheritance(node, source, ctx);
             walk_children(node, source, ctx);
             return;
         }
@@ -220,6 +252,123 @@ fn walk_node(node: Node, source: &[u8], ctx: &mut ParseContext) {
     }
 
     walk_children(node, source, ctx);
+}
+
+fn record_rust_impl_inheritance(node: Node, source: &[u8], ctx: &mut ParseContext) {
+    let Some(trait_node) = node.child_by_field_name("trait") else {
+        return;
+    };
+    let Some(type_node) = node.child_by_field_name("type") else {
+        return;
+    };
+    let Some(trait_name) = extract_type_name(trait_node, source) else {
+        return;
+    };
+    let Some(type_name) = extract_type_name(type_node, source) else {
+        return;
+    };
+    let child_id = ctx
+        .symbols
+        .iter()
+        .find(|s| s.file_path == ctx.file_path && s.name == type_name)
+        .map(|s| s.id.clone())
+        .unwrap_or_else(|| {
+            stable_symbol_id(
+                &ctx.file_path,
+                &type_name,
+                node.start_position().row as u32 + 1,
+                "class",
+            )
+        });
+    ctx.record_inheritance(&child_id, &trait_name, EdgeType::Implements);
+}
+
+fn record_type_inheritance(node: Node, source: &[u8], child_id: &str, ctx: &mut ParseContext) {
+    if let Some(superclass) = node.child_by_field_name("superclass") {
+        if let Some(name) = extract_type_name(superclass, source) {
+            ctx.record_inheritance(child_id, &name, EdgeType::Extends);
+        }
+    }
+
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        if child.kind() == "class_heritage" {
+            record_class_heritage(child, source, child_id, ctx);
+        }
+    }
+
+    if let Some(interfaces) = node.child_by_field_name("interfaces") {
+        for name in interface_names(interfaces, source) {
+            ctx.record_inheritance(child_id, &name, EdgeType::Implements);
+        }
+    }
+}
+
+fn record_class_heritage(node: Node, source: &[u8], child_id: &str, ctx: &mut ParseContext) {
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        match child.kind() {
+            "extends_clause" | "extends_type_clause" => {
+                if let Some(value) = child
+                    .child_by_field_name("value")
+                    .or_else(|| child.child_by_field_name("type"))
+                {
+                    if let Some(name) = extract_type_name(value, source) {
+                        ctx.record_inheritance(child_id, &name, EdgeType::Extends);
+                    }
+                }
+            }
+            "implements_clause" | "implements_type_clause" => {
+                for name in interface_names(child, source) {
+                    ctx.record_inheritance(child_id, &name, EdgeType::Implements);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+fn interface_names(node: Node, source: &[u8]) -> Vec<String> {
+    let mut names = Vec::new();
+    collect_interface_names(node, source, &mut names);
+    names
+}
+
+fn collect_interface_names(node: Node, source: &[u8], names: &mut Vec<String>) {
+    if matches!(
+        node.kind(),
+        "type_identifier" | "identifier" | "scoped_type_identifier" | "generic_type"
+    ) {
+        if let Some(name) = extract_type_name(node, source) {
+            names.push(name);
+            return;
+        }
+    }
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        collect_interface_names(child, source, names);
+    }
+}
+
+fn extract_type_name(node: Node, source: &[u8]) -> Option<String> {
+    match node.kind() {
+        "type_identifier" | "identifier" | "property_identifier" => node_text(node, source),
+        "scoped_type_identifier" | "scoped_identifier" => node
+            .child_by_field_name("name")
+            .and_then(|n| node_text(n, source)),
+        "generic_type" => node
+            .child_by_field_name("type")
+            .and_then(|n| extract_type_name(n, source)),
+        _ => {
+            let mut cursor = node.walk();
+            for child in node.children(&mut cursor) {
+                if let Some(name) = extract_type_name(child, source) {
+                    return Some(name);
+                }
+            }
+            None
+        }
+    }
 }
 
 fn walk_children(node: Node, source: &[u8], ctx: &mut ParseContext) {
@@ -387,5 +536,34 @@ fn func_c() {}
             TreeSitterParser::parse_source("src/main.rs", RepoLanguage::Rust, source).unwrap();
         assert_eq!(result.entrypoints.len(), 1);
         assert_eq!(result.entrypoints[0].kind, EntrypointKind::Main);
+    }
+
+    #[test]
+    fn detects_rust_trait_implementation() {
+        let source = r#"
+trait Speakable {}
+struct Dog;
+impl Speakable for Dog {}
+"#;
+        let result =
+            TreeSitterParser::parse_source("src/traits.rs", RepoLanguage::Rust, source).unwrap();
+        assert_eq!(result.inheritance.len(), 1);
+        assert_eq!(result.inheritance[0].edge_type, EdgeType::Implements);
+        assert_eq!(result.inheritance[0].parent_name, "Speakable");
+    }
+
+    #[test]
+    fn detects_typescript_class_extends() {
+        let source = "class Shape {}\nclass Circle extends Shape {}";
+        let result =
+            TreeSitterParser::parse_source("src/shapes.ts", RepoLanguage::TypeScript, source)
+                .unwrap();
+        assert!(
+            result
+                .inheritance
+                .iter()
+                .any(|e| e.edge_type == EdgeType::Extends && e.parent_name == "Shape"),
+            "expected Circle extends Shape"
+        );
     }
 }

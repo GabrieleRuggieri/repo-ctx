@@ -283,3 +283,26 @@ fn domain_add_attaches_symbols_and_rebuilds_flow() {
     assert_eq!(flow.name, "checkout-flow");
     assert!(flow.steps.len() >= 2);
 }
+
+#[test]
+fn build_inheritance_fixture_resolves_extends_and_implements() {
+    let work = isolated_fixture("inheritance");
+    let report = BuildPipeline::new(
+        &work.root,
+        BuildOptions {
+            incremental: false,
+            no_embeddings: true,
+        },
+    )
+    .run()
+    .expect("build");
+
+    assert!(
+        report.edges_indexed >= 4,
+        "expected extends/implements edges across Rust, TS, and Java"
+    );
+
+    let deps = fs::read_to_string(work.root.join(".repoctx/dependencies.json")).expect("deps");
+    assert!(deps.contains("\"extends\""));
+    assert!(deps.contains("\"implements\""));
+}

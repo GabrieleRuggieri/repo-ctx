@@ -8,7 +8,7 @@ use repoctx_schema::edge::EdgeType;
 use repoctx_schema::symbol::Visibility;
 
 use crate::ids::stable_edge_id;
-use crate::parse::{ParsedCall, ParsedImport};
+use crate::parse::{ParsedCall, ParsedImport, ParsedInheritance};
 
 /// In-memory index for O(1) symbol lookup during graph resolution.
 pub struct SymbolIndex<'a> {
@@ -91,11 +91,12 @@ impl<'a> SymbolIndex<'a> {
 pub struct GraphResolver;
 
 impl GraphResolver {
-    /// Resolves call and import references to [`DependencyEdgeRecord`] entries.
+    /// Resolves call, import, and inheritance references to edges.
     pub fn resolve(
         symbols: &[SymbolRecord],
         calls: &[ParsedCall],
         imports: &[ParsedImport],
+        inheritance: &[ParsedInheritance],
     ) -> Vec<DependencyEdgeRecord> {
         let index = SymbolIndex::new(symbols);
         let mut edges = Vec::new();
@@ -142,6 +143,26 @@ impl GraphResolver {
             );
         }
 
+        for edge in inheritance {
+            let Some(child) = index.by_id.get(edge.child_symbol_id.as_str()) else {
+                continue;
+            };
+            let Some(parent) = index.resolve_call(child, &edge.parent_name) else {
+                continue;
+            };
+            if child.id == parent.id {
+                continue;
+            }
+            push_edge(
+                &mut edges,
+                &mut seen,
+                &child.id,
+                &parent.id,
+                edge.edge_type,
+                1.0,
+            );
+        }
+
         edges.sort_by(|a, b| {
             a.src_symbol_id
                 .cmp(&b.src_symbol_id)
@@ -156,7 +177,7 @@ impl GraphResolver {
         symbols: &[SymbolRecord],
         calls: &[ParsedCall],
     ) -> Vec<DependencyEdgeRecord> {
-        Self::resolve(symbols, calls, &[])
+        Self::resolve(symbols, calls, &[], &[])
     }
 }
 
@@ -238,6 +259,50 @@ mod tests {
             visibility: Visibility::Public,
             module_id: None,
         }
+    }
+
+    fn class_sym(id: &str, name: &str, file: &str) -> SymbolRecord {
+        SymbolRecord {
+            kind: SymbolKind::Class,
+            ..sym(id, name, file)
+        }
+    }
+
+    #[test]
+    fn resolves_extends_and_implements() {
+        use crate::parse::ParsedInheritance;
+
+        let symbols = vec![
+            class_sym("shape", "Shape", "src/shapes.ts"),
+            class_sym("circle", "Circle", "src/shapes.ts"),
+            SymbolRecord {
+                kind: SymbolKind::Type,
+                ..sym("pet", "Pet", "src/Animals.java")
+            },
+            class_sym("animal", "Animal", "src/Animals.java"),
+            class_sym("dog", "Dog", "src/Animals.java"),
+        ];
+        let inheritance = vec![
+            ParsedInheritance {
+                child_symbol_id: "circle".into(),
+                parent_name: "Shape".into(),
+                edge_type: EdgeType::Extends,
+            },
+            ParsedInheritance {
+                child_symbol_id: "dog".into(),
+                parent_name: "Animal".into(),
+                edge_type: EdgeType::Extends,
+            },
+            ParsedInheritance {
+                child_symbol_id: "dog".into(),
+                parent_name: "Pet".into(),
+                edge_type: EdgeType::Implements,
+            },
+        ];
+        let edges = GraphResolver::resolve(&symbols, &[], &[], &inheritance);
+        assert_eq!(edges.len(), 3);
+        assert!(edges.iter().any(|e| e.edge_type == EdgeType::Extends));
+        assert!(edges.iter().any(|e| e.edge_type == EdgeType::Implements));
     }
 
     #[test]

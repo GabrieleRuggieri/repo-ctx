@@ -125,8 +125,10 @@ impl BuildPipeline {
         let all_symbols = store.load_symbols()?;
         let all_calls = self.remap_calls(&parse_cache, &all_symbols);
         let all_imports = collect_imports(&parse_cache);
+        let all_inheritance = self.remap_inheritance(&parse_cache, &all_symbols);
 
-        let edges = GraphResolver::resolve(&all_symbols, &all_calls, &all_imports);
+        let edges =
+            GraphResolver::resolve(&all_symbols, &all_calls, &all_imports, &all_inheritance);
         store.clear_edges()?;
         for edge in &edges {
             store.insert_edge(edge)?;
@@ -216,6 +218,42 @@ impl BuildPipeline {
                 remapped.push(ParsedCall {
                     caller_symbol_id: db_caller.id.clone(),
                     callee_name: call.callee_name.clone(),
+                });
+            }
+        }
+
+        remapped
+    }
+
+    /// Maps parsed inheritance edges to stable symbol ids in the index.
+    fn remap_inheritance(
+        &self,
+        parse_cache: &HashMap<String, FileParseResult>,
+        db_symbols: &[repoctx_schema::artifacts::SymbolRecord],
+    ) -> Vec<crate::parse::ParsedInheritance> {
+        let mut remapped = Vec::new();
+
+        for parsed in parse_cache.values() {
+            let parse_id_to_name: HashMap<&str, &str> = parsed
+                .symbols
+                .iter()
+                .map(|s| (s.id.as_str(), s.name.as_str()))
+                .collect();
+
+            for edge in &parsed.inheritance {
+                let Some(child_name) = parse_id_to_name.get(edge.child_symbol_id.as_str()) else {
+                    continue;
+                };
+                let Some(db_child) = db_symbols
+                    .iter()
+                    .find(|s| s.file_path == parsed.path && s.name == *child_name)
+                else {
+                    continue;
+                };
+                remapped.push(crate::parse::ParsedInheritance {
+                    child_symbol_id: db_child.id.clone(),
+                    parent_name: edge.parent_name.clone(),
+                    edge_type: edge.edge_type,
                 });
             }
         }

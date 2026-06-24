@@ -151,3 +151,22 @@
 
 - 27 test totali passano
 - `cargo clippy` pulito
+
+---
+
+## 2026-06-23 — Sessione 8: edge extends/implements (branch `feature/extends-implements-edges`)
+
+### Completato
+
+- **Parsing tree-sitter** per `extends` / `implements`:
+  - Rust: `impl Trait for Type`
+  - TypeScript: `class X extends Y`
+  - Java: `extends` + `implements`
+- **`GraphResolver`**: risoluzione edge `extends` e `implements`
+- Fixture `tests/fixtures/inheritance/` (Rust + TS + Java)
+- Unit test parser + integration test build
+
+### Verificato
+
+- 30 test totali passano (`cargo test --all`)
+- `cargo clippy` pulito
