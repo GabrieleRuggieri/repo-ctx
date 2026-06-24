@@ -4,8 +4,9 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 
+use repoctx_core::wiki::{find_page_for_symbol, WikiStore};
 use repoctx_schema::artifacts::SymbolRecord;
-use repoctx_store::IndexStore;
+use repoctx_store::{IndexStore, RepoCtxPaths};
 
 use crate::types::{CodeSnippet, ContextResult, ContextTask, SummarySource};
 
@@ -99,6 +100,10 @@ pub fn assemble_context(
         .filter_map(|id| id_to_symbol.get(id.as_str()).map(|s| s.name.clone()))
         .collect();
 
+    let paths = RepoCtxPaths::new(repo_root);
+    let wiki_store = WikiStore::new(&paths);
+    let wiki_page = find_page_for_symbol(&wiki_store, &root.id).ok().flatten();
+
     let markdown = render_markdown(&MarkdownInput {
         root: &root,
         responsibility: &responsibility,
@@ -108,6 +113,8 @@ pub fn assemble_context(
         affected_ids: &affected_ids,
         id_to_symbol: &id_to_symbol,
         related: &related_components,
+        wiki_page_id: wiki_page.as_ref().map(|p| p.meta.id.as_str()),
+        wiki_body: wiki_page.as_ref().map(|p| p.body.as_str()),
         task,
     });
 
@@ -124,6 +131,8 @@ pub fn assemble_context(
         callers: caller_names,
         callees: callee_names,
         affected_symbol_ids: affected_ids,
+        wiki_page_id: wiki_page.as_ref().map(|p| p.meta.id.clone()),
+        wiki_body: wiki_page.as_ref().map(|p| p.body.clone()),
         markdown,
         task,
         budget_tokens: budget,
@@ -222,6 +231,8 @@ struct MarkdownInput<'a> {
     affected_ids: &'a [String],
     id_to_symbol: &'a HashMap<&'a str, &'a SymbolRecord>,
     related: &'a [String],
+    wiki_page_id: Option<&'a str>,
+    wiki_body: Option<&'a str>,
     task: ContextTask,
 }
 
@@ -235,6 +246,8 @@ fn render_markdown(input: &MarkdownInput<'_>) -> String {
         affected_ids,
         id_to_symbol,
         related,
+        wiki_page_id,
+        wiki_body,
         task,
     } = input;
     let mut md = String::new();
@@ -243,6 +256,16 @@ fn render_markdown(input: &MarkdownInput<'_>) -> String {
     md.push_str("## Symbol\n\n");
     md.push_str(responsibility);
     md.push('\n');
+
+    if let (Some(page_id), Some(body)) = (wiki_page_id, wiki_body) {
+        md.push_str("\n## Wiki\n\n");
+        md.push_str(&format!("_Grounded page: `{page_id}`_\n\n"));
+        md.push_str(body);
+        if !body.ends_with('\n') {
+            md.push('\n');
+        }
+        md.push('\n');
+    }
 
     if !snippets.is_empty() {
         md.push_str("\n## Code\n\n");

@@ -3,7 +3,9 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use repoctx_core::wiki::WikiStore;
 use repoctx_query::{ContextTask, QueryEngine};
+use repoctx_store::RepoCtxPaths;
 use rmcp::{
     handler::server::{tool::ToolRouter, wrapper::Parameters},
     model::{CallToolResult, Content, ErrorCode},
@@ -14,7 +16,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use tracing::info;
 
-use crate::sampling::{apply_flow_enrichment, apply_symbol_enrichment};
+use crate::sampling::{apply_flow_enrichment, apply_symbol_enrichment, enrich_wiki_prose};
 
 /// Shared server state: repository root for query resolution.
 #[derive(Clone)]
@@ -62,6 +64,16 @@ pub struct GetDependenciesParams {
     /// Downstream traversal depth.
     #[serde(default = "default_depth")]
     pub depth: u32,
+}
+
+/// Input for `get_wiki`.
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct GetWikiParams {
+    /// Page id, title fragment, or `index` (default).
+    pub page: Option<String>,
+    /// Enrich prose slot via MCP sampling when supported.
+    #[serde(default)]
+    pub enrich: bool,
 }
 
 fn default_depth() -> u32 {
@@ -180,12 +192,85 @@ impl RepoCtxMcpServer {
             .map_err(Self::map_query_error)?;
         Self::json_result(&result)
     }
+
+    /// Returns a grounded wiki page or the index router.
+    #[tool(description = "Get a graph-grounded wiki page (markdown) or index router")]
+    async fn get_wiki(
+        &self,
+        params: Parameters<GetWikiParams>,
+        peer: Peer<RoleServer>,
+    ) -> Result<CallToolResult, McpError> {
+        let repo_root = self.repo_root.as_path().to_path_buf();
+        let paths = RepoCtxPaths::new(&repo_root);
+        let wiki_store = WikiStore::new(&paths);
+        let query = params.0.page.unwrap_or_else(|| "index".into());
+        let enrich = params.0.enrich;
+        let query_for_err = query.clone();
+
+        let mut page = tokio::task::spawn_blocking(move || resolve_wiki_page(&wiki_store, &query))
+            .await
+            .map_err(|e| McpError::new(ErrorCode::INTERNAL_ERROR, e.to_string(), None))?
+            .map_err(|e| McpError::new(ErrorCode::INTERNAL_ERROR, e.to_string(), None))?
+            .ok_or_else(|| {
+                McpError::new(
+                    ErrorCode::INVALID_PARAMS,
+                    format!("wiki page not found: {query_for_err}"),
+                    None,
+                )
+            })?;
+
+        if enrich {
+            page = enrich_wiki_prose(&peer, &repo_root, page).await;
+        }
+
+        let markdown = format!(
+            "---\n{}\n---\n\n{}",
+            toml::to_string(&page.meta).map_err(|e| McpError::new(
+                ErrorCode::INTERNAL_ERROR,
+                e.to_string(),
+                None
+            ))?,
+            page.body
+        );
+        Ok(CallToolResult::success(vec![Content::text(markdown)]))
+    }
+}
+
+fn resolve_wiki_page(
+    store: &WikiStore,
+    query: &str,
+) -> Result<Option<repoctx_schema::wiki::WikiPage>, repoctx_core::error::CoreError> {
+    let q = query.trim().to_lowercase();
+    if q == "index" || q == "wiki_index" {
+        return store.load_index();
+    }
+    if let Some(page) = store.load_page(query)? {
+        return Ok(Some(page));
+    }
+    for id in store.list_page_ids()? {
+        let Some(page) = store.load_page(&id)? else {
+            continue;
+        };
+        if page.meta.id.to_lowercase() == q
+            || page.meta.title.to_lowercase().contains(&q)
+            || page
+                .meta
+                .id
+                .strip_prefix("wiki_")
+                .unwrap_or(&page.meta.id)
+                .to_lowercase()
+                .contains(&q)
+        {
+            return Ok(Some(page));
+        }
+    }
+    Ok(None)
 }
 
 #[tool_handler(
     name = "repoctx-mcp",
-    version = "0.1.0",
-    instructions = "RepoCtx MCP server. Run `repoctx build` in the target repository first. Tools: get_context, get_impact, get_flow, get_dependencies. When the host supports MCP sampling, get_context and get_flow lazily enrich summaries via the host model and cache them locally."
+    version = "0.2.0",
+    instructions = "RepoCtx MCP server. Run `repoctx build` in the target repository first. Tools: get_context, get_wiki, get_impact, get_flow, get_dependencies. When the host supports MCP sampling, get_context, get_flow, and get_wiki (enrich=true) lazily enrich summaries via the host model and cache them locally."
 )]
 impl ServerHandler for RepoCtxMcpServer {}
 

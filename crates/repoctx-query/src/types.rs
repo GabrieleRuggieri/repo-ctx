@@ -114,6 +114,12 @@ pub struct ContextResult {
     pub callees: Vec<String>,
     /// Downstream symbol ids within the task impact depth.
     pub affected_symbol_ids: Vec<String>,
+    /// Grounded wiki page id when anchored to this symbol.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wiki_page_id: Option<String>,
+    /// Wiki markdown body (without frontmatter) when available.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wiki_body: Option<String>,
     /// Agent-ready markdown bundle (one file).
     pub markdown: String,
     /// Task mode used for assembly.

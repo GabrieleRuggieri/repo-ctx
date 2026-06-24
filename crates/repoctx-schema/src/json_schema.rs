@@ -8,6 +8,7 @@ use crate::artifacts::{
     ArchitectureArtifact, DependenciesArtifact, EntrypointsArtifact, FlowsArtifact, SymbolsArtifact,
 };
 use crate::error::SchemaError;
+use crate::wiki::{WikiLintArtifact, WikiStaleQueue};
 use crate::workspace::CrossRepoArtifact;
 
 /// Artifact base names (without `.json` extension).
@@ -18,6 +19,8 @@ pub const ARTIFACT_NAMES: &[&str] = &[
     "entrypoints",
     "architecture",
     "cross_repo",
+    "wiki_lint",
+    "wiki_stale",
 ];
 
 /// Returns the JSON Schema document for a named artifact.
@@ -29,6 +32,8 @@ pub fn root_schema_for(artifact: &str) -> Result<Value, SchemaError> {
         "entrypoints" => serde_json::to_value(schema_for!(EntrypointsArtifact))?,
         "architecture" => serde_json::to_value(schema_for!(ArchitectureArtifact))?,
         "cross_repo" => serde_json::to_value(schema_for!(CrossRepoArtifact))?,
+        "wiki_lint" => serde_json::to_value(schema_for!(WikiLintArtifact))?,
+        "wiki_stale" => serde_json::to_value(schema_for!(WikiStaleQueue))?,
         other => {
             return Err(SchemaError::UnknownArtifact(other.to_string()));
         }

@@ -17,6 +17,7 @@ use crate::graph::GraphResolver;
 use crate::ids::{stable_entrypoint_id, stable_file_id};
 use crate::parse::{FileParseResult, ParsedCall, TreeSitterParser};
 use crate::walker::{FileWalker, SourceFile};
+use crate::wiki::{WikiCompiler, WikiLinter};
 
 /// Options controlling a build run.
 #[derive(Debug, Clone)]
@@ -55,6 +56,8 @@ pub struct BuildReport {
     pub flows_indexed: usize,
     /// Symbol embeddings indexed (when enabled).
     pub embeddings_indexed: usize,
+    /// Wiki pages compiled under `.repoctx/wiki/`.
+    pub wiki_pages_indexed: usize,
     /// Path to `.repoctx/` output directory.
     pub output_dir: String,
 }
@@ -178,6 +181,9 @@ impl BuildPipeline {
         writer.write_artifact("entrypoints", &entrypoints)?;
         writer.write_artifact("architecture", &architecture)?;
 
+        let wiki_pages_indexed = WikiCompiler::new(self.paths.clone()).compile_all(&store)?;
+        let _lint = WikiLinter::new(self.paths.clone()).run(&store)?;
+
         Ok(BuildReport {
             files_discovered: discovered.len(),
             files_parsed,
@@ -187,6 +193,7 @@ impl BuildPipeline {
             entrypoints_indexed,
             flows_indexed,
             embeddings_indexed,
+            wiki_pages_indexed,
             output_dir: writer.output_dir().display().to_string(),
         })
     }

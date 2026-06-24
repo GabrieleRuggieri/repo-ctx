@@ -28,4 +28,8 @@ pub enum CoreError {
     /// Domain refinement error.
     #[error("domain error: {0}")]
     Domain(String),
+
+    /// Wiki compile/lint/store error.
+    #[error("wiki error: {0}")]
+    Wiki(String),
 }

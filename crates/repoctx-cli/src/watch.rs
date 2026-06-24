@@ -1,5 +1,6 @@
 //! `repoctx build --watch`: debounced incremental rebuilds on file changes.
 
+use std::fs;
 use std::path::Path;
 use std::sync::mpsc;
 use std::time::Duration;
@@ -8,6 +9,7 @@ use anyhow::{Context, Result};
 use notify::RecursiveMode;
 use notify_debouncer_mini::{new_debouncer, DebouncedEvent};
 use repoctx_core::{BuildOptions, BuildPipeline, BuildReport};
+use repoctx_schema::wiki::WikiStaleQueue;
 use tracing::info;
 
 const DEBOUNCE_MS: u64 = 400;
@@ -85,16 +87,29 @@ fn print_report(report: &BuildReport, json: bool) {
         }
     } else {
         println!(
-            "build complete: {} parsed, {} skipped, {} symbols, {} edges, {} flows, {} embeddings → {}",
+            "build complete: {} parsed, {} skipped, {} symbols, {} edges, {} flows, {} wiki pages, {} embeddings → {}",
             report.files_parsed,
             report.files_skipped,
             report.symbols_indexed,
             report.edges_indexed,
             report.flows_indexed,
+            report.wiki_pages_indexed,
             report.embeddings_indexed,
             report.output_dir
         );
+        if let Some(stale) = read_stale_count(Path::new(&report.output_dir)) {
+            if stale > 0 {
+                eprintln!("wiki: {stale} stale page(s) queued — run `repoctx wiki sync`");
+            }
+        }
     }
+}
+
+fn read_stale_count(repoctx_dir: &Path) -> Option<usize> {
+    let path = repoctx_dir.join("wiki_stale.json");
+    let raw = fs::read_to_string(path).ok()?;
+    let queue: WikiStaleQueue = serde_json::from_str(&raw).ok()?;
+    Some(queue.page_ids.len())
 }
 
 #[cfg(test)]

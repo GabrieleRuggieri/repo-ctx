@@ -81,6 +81,11 @@ enum Commands {
         #[command(subcommand)]
         action: DomainAction,
     },
+    /// Grounded knowledge wiki (compile, lint, show pages).
+    Wiki {
+        #[command(subcommand)]
+        action: WikiAction,
+    },
 }
 
 /// CLI task mode for `repoctx context`.
@@ -112,6 +117,33 @@ enum WorkspaceAction {
         #[arg(long)]
         no_embeddings: bool,
         /// Emit machine-readable JSON to stdout.
+        #[arg(long)]
+        json: bool,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+enum WikiAction {
+    /// Recompile wiki pages (all, or stale queue from last lint).
+    Sync {
+        /// Recompile every page instead of only stale ids.
+        #[arg(long)]
+        all: bool,
+    },
+    /// Lint wiki pages against the live graph.
+    Lint {
+        /// Emit machine-readable JSON.
+        #[arg(long)]
+        json: bool,
+        /// Exit with failure when lint finds issues.
+        #[arg(long)]
+        strict: bool,
+    },
+    /// Show a wiki page by id, title, or name stem.
+    Show {
+        /// Page id, title fragment, or stem (e.g. `payment`, `wiki_flow_payment`).
+        page: String,
+        /// Emit frontmatter + body as JSON.
         #[arg(long)]
         json: bool,
     },

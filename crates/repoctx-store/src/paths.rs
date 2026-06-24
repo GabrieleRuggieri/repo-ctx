@@ -31,11 +31,22 @@ impl RepoCtxPaths {
     }
 
     /// Returns the path for a named JSON artifact file.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - Artifact base name without extension (e.g. `symbols`).
     pub fn artifact(&self, name: &str) -> PathBuf {
         self.output_dir.join(format!("{name}.json"))
+    }
+
+    /// Returns `.repoctx/wiki/` grounded knowledge pages directory.
+    pub fn wiki_dir(&self) -> PathBuf {
+        self.output_dir.join("wiki")
+    }
+
+    /// Returns `.repoctx/wiki_stale.json` sync queue path.
+    pub fn wiki_stale_queue(&self) -> PathBuf {
+        self.output_dir.join("wiki_stale.json")
+    }
+
+    /// Returns `.repoctx/wiki_lint.json` lint report path.
+    pub fn wiki_lint_report(&self) -> PathBuf {
+        self.output_dir.join("wiki_lint.json")
     }
 }

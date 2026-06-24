@@ -14,7 +14,9 @@ use tracing::debug;
 
 const ENTITY_SYMBOL: &str = "symbol";
 const ENTITY_FLOW: &str = "flow";
+const ENTITY_WIKI: &str = "wiki";
 const SOURCE_SAMPLING: &str = "mcp_sampling";
+const PROSE_SLOT: &str = "<!-- repoctx:slot prose -->";
 
 /// Returns true when the connected MCP client can handle `sampling/createMessage`.
 pub fn client_supports_sampling(peer: &Peer<RoleServer>) -> bool {
@@ -108,6 +110,66 @@ pub async fn apply_flow_enrichment(
         result.description_source = SummarySource::McpSampling;
     }
     result
+}
+
+/// Fills the prose slot on a wiki page via MCP sampling when the host supports it.
+pub async fn enrich_wiki_prose(
+    peer: &Peer<RoleServer>,
+    repo_root: &Path,
+    mut page: repoctx_schema::wiki::WikiPage,
+) -> repoctx_schema::wiki::WikiPage {
+    if !client_supports_sampling(peer) || !page.body.contains(PROSE_SLOT) {
+        return page;
+    }
+
+    let paths = RepoCtxPaths::new(repo_root);
+    let page_id = page.meta.id.clone();
+
+    if let Some(cached) = load_cached(ENTITY_WIKI, &page_id, &paths.index_db) {
+        page.body = replace_prose_slot(&page.body, &cached);
+        page.meta.source = repoctx_schema::wiki::WikiPageSource::McpSampling;
+        return page;
+    }
+
+    let prompt = build_wiki_prompt(&page);
+    let Some(prose) = request_summary(peer, &prompt).await else {
+        return page;
+    };
+    cache_enrichment(ENTITY_WIKI, &page_id, &prose, &paths.index_db);
+    page.body = replace_prose_slot(&page.body, &prose);
+    page.meta.source = repoctx_schema::wiki::WikiPageSource::McpSampling;
+    page
+}
+
+fn replace_prose_slot(body: &str, prose: &str) -> String {
+    if let Some(idx) = body.find(PROSE_SLOT) {
+        let after = body[idx + PROSE_SLOT.len()..]
+            .find("\n## ")
+            .map(|i| idx + PROSE_SLOT.len() + i)
+            .unwrap_or(body.len());
+        let mut out = String::new();
+        out.push_str(&body[..idx + PROSE_SLOT.len()]);
+        out.push('\n');
+        out.push_str(prose);
+        out.push_str(&body[after..]);
+        return out;
+    }
+    format!("{body}\n\n{prose}")
+}
+
+fn build_wiki_prompt(page: &repoctx_schema::wiki::WikiPage) -> String {
+    let facts = format!(
+        "title: {}\nkind: {:?}\nanchored_symbols: {}\nbody_excerpt:\n{}",
+        page.meta.title,
+        page.meta.kind,
+        page.meta.symbol_ids.join(", "),
+        page.body.chars().take(1200).collect::<String>(),
+    );
+    let redacted = redact_secrets(&facts);
+    format!(
+        "Write 2-4 sentences of intent and gotchas for this grounded wiki page. \
+Use ONLY the facts below. Do not invent APIs or behavior.\n\n{redacted}"
+    )
 }
 
 fn load_cached(entity_kind: &str, entity_id: &str, db_path: &Path) -> Option<String> {
@@ -230,6 +292,8 @@ mod tests {
             callers: vec![],
             callees: vec![],
             affected_symbol_ids: vec![],
+            wiki_page_id: None,
+            wiki_body: None,
             markdown: "# Context: pay".into(),
             task: ContextTask::Fix,
             budget_tokens: 6000,

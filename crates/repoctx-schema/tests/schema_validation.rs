@@ -53,6 +53,11 @@ fn minimal_artifacts_validate() {
             "cross_repo",
             r#"{"schemaVersion":"1.0.0","workspace":"demo","edges":[]}"#,
         ),
+        (
+            "wiki_lint",
+            r#"{"schemaVersion":"1.0.0","stalePageIds":[],"claimErrors":[],"brokenLinks":[],"orphanPageIds":[]}"#,
+        ),
+        ("wiki_stale", r#"{"schemaVersion":"1.0.0","pageIds":[]}"#),
     ];
 
     for (name, json) in samples {

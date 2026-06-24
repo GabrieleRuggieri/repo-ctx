@@ -200,6 +200,9 @@ fn context_assembly_includes_code_snippets() {
     assert!(!ctx.markdown.is_empty());
     assert!(ctx.markdown.contains("## Code"));
     assert!(!ctx.snippets.is_empty(), "expected real source snippets");
+    if ctx.wiki_page_id.is_some() {
+        assert!(ctx.markdown.contains("## Wiki"));
+    }
     assert!(
         ctx.snippets
             .iter()
@@ -222,6 +225,73 @@ fn build_tiny_python_detects_main_entrypoint() {
     .expect("build should succeed");
 
     assert!(report.entrypoints_indexed >= 1);
+}
+
+#[test]
+fn build_flows_payment_compiles_wiki_pages() {
+    let work = isolated_fixture("flows-payment");
+    let report = BuildPipeline::new(
+        &work.root,
+        BuildOptions {
+            incremental: false,
+            no_embeddings: true,
+        },
+    )
+    .run()
+    .expect("build should succeed");
+
+    assert!(
+        report.wiki_pages_indexed >= 1,
+        "expected wiki pages after build"
+    );
+
+    let wiki_dir = work.root.join(".repoctx/wiki");
+    assert!(wiki_dir.is_dir(), "wiki directory should exist");
+    assert!(
+        wiki_dir.join("index.md").is_file(),
+        "wiki index.md should exist"
+    );
+
+    let lint_path = work.root.join(".repoctx/wiki_lint.json");
+    let lint_json = fs::read_to_string(&lint_path).expect("wiki_lint.json");
+    assert!(lint_json.contains("stalePageIds"));
+
+    let entries: Vec<_> = fs::read_dir(&wiki_dir)
+        .expect("read wiki dir")
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().extension().and_then(|x| x.to_str()) == Some("md"))
+        .collect();
+    assert!(
+        entries.len() >= 2,
+        "expected flow/service/module pages + index"
+    );
+}
+
+#[test]
+fn context_bundle_respects_token_budget() {
+    let work = isolated_fixture("bench-small");
+    BuildPipeline::new(
+        &work.root,
+        BuildOptions {
+            incremental: false,
+            no_embeddings: true,
+        },
+    )
+    .run()
+    .expect("build");
+
+    let engine = QueryEngine::new(&work.root);
+    let budget = 2000u32;
+    let ctx = engine
+        .context("capture", Some(budget), repoctx_query::ContextTask::Fix)
+        .expect("context");
+
+    assert_eq!(ctx.budget_tokens, budget);
+    assert!(!ctx.markdown.is_empty());
+    assert!(
+        ctx.markdown.len() < (budget as usize) * 8,
+        "markdown should stay near budget"
+    );
 }
 
 #[test]

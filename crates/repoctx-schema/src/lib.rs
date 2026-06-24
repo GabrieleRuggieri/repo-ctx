@@ -9,6 +9,7 @@ pub mod error;
 pub mod json_schema;
 pub mod symbol;
 pub mod version;
+pub mod wiki;
 pub mod workspace;
 
 pub use artifacts::{
@@ -22,6 +23,10 @@ pub use json_schema::{
 };
 pub use symbol::{EntrypointKind, SymbolKind, Visibility};
 pub use version::SCHEMA_VERSION;
+pub use wiki::{
+    WikiClaimError, WikiLinkError, WikiLintArtifact, WikiPage, WikiPageKind, WikiPageMeta,
+    WikiPageSource, WikiStaleQueue,
+};
 pub use workspace::{
     CrossRepoArtifact, CrossRepoEdgeRecord, HttpContract, SharedLibContract, WorkspaceContracts,
     WorkspaceManifest, WorkspaceRepo,

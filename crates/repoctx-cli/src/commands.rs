@@ -1,12 +1,18 @@
 //! CLI command handlers delegating to core and query crates.
 
-use anyhow::Result;
-use repoctx_core::{BuildOptions, BuildPipeline, DomainEditor, WorkspacePipeline};
+use anyhow::{bail, Context, Result};
+use repoctx_core::{
+    wiki::{WikiCompiler, WikiLinter, WikiStore},
+    BuildOptions, BuildPipeline, DomainEditor, WorkspacePipeline,
+};
 use repoctx_query::QueryEngine;
+use repoctx_schema::wiki::WikiStaleQueue;
+use repoctx_store::{IndexStore, RepoCtxPaths};
 use serde::Serialize;
+use std::fs;
 
 use crate::watch;
-use crate::{Cli, Commands, DomainAction, WorkspaceAction};
+use crate::{Cli, Commands, DomainAction, WikiAction, WorkspaceAction};
 
 /// Dispatches the parsed CLI to the appropriate handler.
 pub fn execute(cli: Cli) -> Result<()> {
@@ -30,12 +36,13 @@ pub fn execute(cli: Cli) -> Result<()> {
                     print_json(&report)?;
                 } else {
                     println!(
-                        "build complete: {} parsed, {} skipped, {} symbols, {} edges, {} flows, {} embeddings → {}",
+                        "build complete: {} parsed, {} skipped, {} symbols, {} edges, {} flows, {} wiki pages, {} embeddings → {}",
                         report.files_parsed,
                         report.files_skipped,
                         report.symbols_indexed,
                         report.edges_indexed,
                         report.flows_indexed,
+                        report.wiki_pages_indexed,
                         report.embeddings_indexed,
                         report.output_dir
                     );
@@ -140,8 +147,103 @@ pub fn execute(cli: Cli) -> Result<()> {
                 );
             }
         },
+        Commands::Wiki { action } => match action {
+            WikiAction::Sync { all } => {
+                let paths = RepoCtxPaths::new(&cli.repo);
+                let store = IndexStore::open(&paths.index_db)
+                    .context("index missing — run `repoctx build` first")?;
+                let compiler = WikiCompiler::new(paths.clone());
+                let page_ids = if all {
+                    Vec::new()
+                } else {
+                    load_stale_queue(&paths)?
+                };
+                let count = compiler.sync_pages(&store, &page_ids)?;
+                println!("wiki sync complete: {count} page(s) recompiled");
+            }
+            WikiAction::Lint { json, strict } => {
+                let paths = RepoCtxPaths::new(&cli.repo);
+                let store = IndexStore::open(&paths.index_db)
+                    .context("index missing — run `repoctx build` first")?;
+                let report = WikiLinter::new(paths).run(&store)?;
+                if json {
+                    print_json(&report)?;
+                } else {
+                    println!(
+                        "wiki lint: {} stale, {} claim errors, {} broken links, {} orphans",
+                        report.stale_page_ids.len(),
+                        report.claim_errors.len(),
+                        report.broken_links.len(),
+                        report.orphan_page_ids.len()
+                    );
+                }
+                if strict
+                    && (!report.stale_page_ids.is_empty()
+                        || !report.claim_errors.is_empty()
+                        || !report.broken_links.is_empty())
+                {
+                    bail!("wiki lint failed (--strict)");
+                }
+            }
+            WikiAction::Show { page, json } => {
+                let paths = RepoCtxPaths::new(&cli.repo);
+                let wiki_store = WikiStore::new(&paths);
+                let loaded = resolve_wiki_page(&wiki_store, &page)?
+                    .with_context(|| format!("wiki page not found: {page}"))?;
+                if json {
+                    print_json(&loaded)?;
+                } else {
+                    println!(
+                        "---\n{}\n---\n\n{}",
+                        toml::to_string(&loaded.meta)?,
+                        loaded.body
+                    );
+                }
+            }
+        },
     }
     Ok(())
+}
+
+fn load_stale_queue(paths: &RepoCtxPaths) -> Result<Vec<String>> {
+    let path = paths.wiki_stale_queue();
+    if !path.is_file() {
+        return Ok(Vec::new());
+    }
+    let raw = fs::read_to_string(&path)?;
+    let queue: WikiStaleQueue = serde_json::from_str(&raw)?;
+    Ok(queue.page_ids)
+}
+
+fn resolve_wiki_page(
+    store: &WikiStore,
+    query: &str,
+) -> Result<Option<repoctx_schema::wiki::WikiPage>> {
+    let q = query.trim().to_lowercase();
+    if q == "index" || q == "wiki_index" {
+        return Ok(store.load_index()?);
+    }
+    if let Ok(Some(page)) = store.load_page(query) {
+        return Ok(Some(page));
+    }
+    for id in store.list_page_ids()? {
+        let Some(page) = store.load_page(&id)? else {
+            continue;
+        };
+        if page.meta.id.to_lowercase() == q
+            || page.meta.title.to_lowercase().contains(&q)
+            || page
+                .meta
+                .id
+                .strip_prefix("wiki_")
+                .unwrap_or(&page.meta.id)
+                .to_lowercase()
+                .contains(&q)
+        {
+            return Ok(Some(page));
+        }
+    }
+    Ok(None)
 }
 
 fn print_json<T: Serialize>(value: &T) -> Result<()> {
