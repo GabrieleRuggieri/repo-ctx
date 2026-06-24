@@ -40,6 +40,9 @@ repoctx-core = { path = "crates/repoctx-core" }
 repoctx-query = { path = "crates/repoctx-query" }
 repoctx-schema = { path = "crates/repoctx-schema" }
 repoctx-store = { path = "crates/repoctx-store" }
+rmcp = { version = "1.8", features = ["server", "transport-io", "macros"] }
+schemars = "1.2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 
 [profile.release]
 lto = true

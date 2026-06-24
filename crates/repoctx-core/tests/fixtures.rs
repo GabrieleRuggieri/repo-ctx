@@ -70,3 +70,25 @@ fn build_tiny_python_detects_main_entrypoint() {
 
     assert!(report.entrypoints_indexed >= 1);
 }
+
+#[test]
+fn build_flows_payment_discovers_flow() {
+    let root = fixture_path("flows-payment");
+    let report = BuildPipeline::new(
+        &root,
+        BuildOptions {
+            incremental: false,
+            no_embeddings: true,
+        },
+    )
+    .run()
+    .expect("build should succeed");
+
+    assert!(report.flows_indexed >= 1);
+
+    let engine = QueryEngine::new(&root);
+    let flow = engine.flow("payment").expect("flow query");
+    assert!(flow.flow.is_some(), "payment flow should exist");
+    let flow = flow.flow.unwrap();
+    assert!(flow.steps.len() >= 2);
+}

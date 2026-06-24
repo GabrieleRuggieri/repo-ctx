@@ -52,6 +52,28 @@
 
 ### Note
 
-- `HeuristicExtractor` deprecato (non più usato da `build`)
 - Import/extends e flow reconstructor ancora da fare (P0-4)
 - MCP server ancora stub (branch `feature/mcp-server` da aprire)
+
+---
+
+## 2026-06-23 — Sessione 3: MCP server + flow reconstructor (branch `feature/mcp-server`)
+
+### Completato
+
+- **MCP server** (`repoctx-mcp`) con [rmcp](https://docs.rs/rmcp) su stdio:
+  - `get_context`, `get_impact`, `get_flow`, `get_dependencies`
+  - Repo root via `REPOCTX_ROOT` o cwd
+- **`FlowReconstructor`**: auto-discovery domini da path + BFS sul call graph
+- Fixture `tests/fixtures/flows-payment/` + integration test
+- Store: `insert_flow`, `clear_flows`, `load_call_edges`
+
+### Verificato
+
+- 13 test totali passano (`cargo test --all`)
+- `cargo clippy` pulito
+
+### Note
+
+- MCP sampling (P1-2) non ancora implementato
+- JSON Schema artifacts (P0-6) prossimo step consigliato

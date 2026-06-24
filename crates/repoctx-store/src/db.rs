@@ -9,6 +9,7 @@ use repoctx_schema::artifacts::{
 use repoctx_schema::edge::{BoundaryKind, EdgeType};
 use repoctx_schema::symbol::{EntrypointKind, SymbolKind, Visibility};
 use rusqlite::{params, Connection, OptionalExtension};
+use uuid::Uuid;
 
 use crate::error::StoreError;
 
@@ -215,6 +216,45 @@ impl IndexStore {
     pub fn clear_entrypoints(&self) -> Result<(), StoreError> {
         self.conn.execute("DELETE FROM entrypoints", [])?;
         Ok(())
+    }
+
+    /// Deletes all flows and steps (rebuilt after each parse pass).
+    pub fn clear_flows(&self) -> Result<(), StoreError> {
+        self.conn
+            .execute_batch("DELETE FROM flow_steps; DELETE FROM flows;")?;
+        Ok(())
+    }
+
+    /// Inserts a flow and its ordered steps.
+    pub fn insert_flow(&self, flow: &FlowRecord) -> Result<(), StoreError> {
+        self.conn.execute(
+            "INSERT OR REPLACE INTO flows (id, name, description) VALUES (?1, ?2, ?3)",
+            params![flow.id, flow.name, flow.description],
+        )?;
+        for step in &flow.steps {
+            self.conn.execute(
+                "INSERT OR REPLACE INTO flow_steps (id, flow_id, step_order, symbol_id, external_system)
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![
+                    Uuid::new_v4().to_string(),
+                    flow.id,
+                    step.order,
+                    step.symbol_id,
+                    step.external_system,
+                ],
+            )?;
+        }
+        Ok(())
+    }
+
+    /// Returns all call edges as source/target symbol id pairs.
+    pub fn load_call_edges(&self) -> Result<Vec<(String, String)>, StoreError> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT src_symbol_id, dst_symbol_id FROM edges WHERE edge_type = 'calls'")?;
+        let rows = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?;
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(StoreError::from)
     }
 
     /// Inserts a dependency edge between two symbols.

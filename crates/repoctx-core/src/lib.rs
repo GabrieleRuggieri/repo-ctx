@@ -7,10 +7,13 @@
 pub mod build;
 pub mod error;
 pub mod extract;
+pub mod flow;
 pub mod graph;
 pub mod language;
 pub mod parse;
 pub mod walker;
+
+pub use flow::FlowReconstructor;
 
 pub use build::{BuildOptions, BuildPipeline, BuildReport};
 pub use error::CoreError;

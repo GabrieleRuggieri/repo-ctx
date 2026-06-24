@@ -299,6 +299,16 @@ cargo build --release
 ./target/release/repoctx build
 ```
 
+### MCP server (AI agents)
+
+```bash
+# Dalla root del repo da analizzare (dopo `repoctx build`)
+export REPOCTX_ROOT=.
+cargo run --bin repoctx-mcp --release
+```
+
+Tools esposti: `get_context`, `get_impact`, `get_flow`, `get_dependencies`.
+
 ### Run tests & lint
 
 ```bash

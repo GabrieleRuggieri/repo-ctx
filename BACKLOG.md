@@ -8,11 +8,11 @@
 
 | ID | Area | Task | Note |
 |---|---|---|---|
-| P0-1 | Parsing | Integrare **tree-sitter** per Rust, TS/JS, Python, Go, Java | ✅ v0 su `feature/tree-sitter-parser` |
-| P0-2 | Graph | **Resolver** import/call/extends → popolare tabella `edges` | ✅ call edges v0; import/extends TODO |
-| P0-3 | Graph | **Entrypoint detector** (main, HTTP route heuristics) | ✅ `main` v0 |
-| P0-4 | Flow | **Flow reconstructor** base (clustering call graph + nomi cartelle) | `repoctx flow <domain>` |
-| P0-5 | MCP | Server **rmcp** con `get_context`, `get_impact`, `get_flow`, `get_dependencies` | Interfaccia agenti |
+| P0-1 | Parsing | Integrare **tree-sitter** per Rust, TS/JS, Python, Go, Java | ✅ merge su `main` |
+| P0-2 | Graph | **Resolver** import/call/extends → popolare tabella `edges` | ✅ call edges; import/extends TODO |
+| P0-3 | Graph | **Entrypoint detector** (main, HTTP route heuristics) | ✅ `main` v0; HTTP TODO |
+| P0-4 | Flow | **Flow reconstructor** base (clustering call graph + nomi cartelle) | ✅ v0 auto-discovery path |
+| P0-5 | MCP | Server **rmcp** con `get_context`, `get_impact`, `get_flow`, `get_dependencies` | ✅ branch `feature/mcp-server` |
 | P0-6 | Schema | File **JSON Schema** in `schemas/` + validazione in CI | Contratto pubblico testabile |
 | P0-7 | CLI | Comandi `domain rename` / `domain add` | Persistenza in store |
 | P0-8 | Incremental | Fix re-index: eliminare simboli stale quando un file cambia | ✅ `delete_symbols_for_path` |
@@ -40,7 +40,16 @@
 
 ---
 
+## Prossimo consigliato
+
+1. **P0-6** — JSON Schema in `schemas/` + validazione CI
+2. **P0-2** — edge `imports` / `extends` (tree-sitter use/import nodes)
+3. **P0-7** — comandi `domain rename` / `domain add`
+4. **P1-2** — MCP sampling per enrichment lazy
+
+---
+
 ## Blocchi / domande aperte
 
-- ~~Nome org GitHub~~ → repo personale: [GabrieleRuggieri/repo-ctx](https://github.com/GabrieleRuggieri/repo-ctx)
+- ~~Nome org GitHub~~ → [GabrieleRuggieri/repo-ctx](https://github.com/GabrieleRuggieri/repo-ctx)
 - Conferma priorità lingue oltre al core set (Rust, TS/JS, Python, Go, Java)

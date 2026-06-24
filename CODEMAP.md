@@ -9,7 +9,7 @@
 | Binario | Crate | Ruolo |
 |---|---|---|
 | `repoctx` | `repoctx-cli` | CLI developer-facing |
-| `repoctx-mcp` | `repoctx-mcp` | MCP stdio (stub v0) |
+| `repoctx-mcp` | `repoctx-mcp` | MCP stdio via rmcp (`get_context`, `get_impact`, `get_flow`, `get_dependencies`) |
 
 ---
 
@@ -24,6 +24,7 @@ repoctx-cli::main
             ├─ IndexStore::delete_symbols_for_path  # incremental purge
             ├─ IndexStore::insert_symbol
             ├─ GraphResolver::resolve_calls  # call edges → DB
+            ├─ FlowReconstructor::reconstruct # flows.json
             ├─ index_entrypoints (main)      # entrypoints.json
             ├─ IndexStore::export_artifacts
             └─ ArtifactWriter::write_artifact × 5
@@ -46,6 +47,22 @@ repoctx-cli::commands::execute
        ├─ find_symbols_by_name / find_flow_by_name
        └─ downstream_symbols (recursive CTE)
 ```
+
+---
+
+## MCP (`repoctx-mcp`)
+
+```
+repoctx-mcp::main (tokio)
+  └─ server::serve(stdio)
+       └─ RepoCtxMcpServer (rmcp tool_router)
+            ├─ get_context  → QueryEngine::context
+            ├─ get_impact   → QueryEngine::impact
+            ├─ get_flow     → QueryEngine::flow
+            └─ get_dependencies → QueryEngine::dependencies
+```
+
+Env: `REPOCTX_ROOT` = percorso repo (default: cwd). Richiede `repoctx build` eseguito prima.
 
 ---
 

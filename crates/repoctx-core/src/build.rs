@@ -10,6 +10,7 @@ use tracing::info;
 use uuid::Uuid;
 
 use crate::error::CoreError;
+use crate::flow::{CallEdge, FlowReconstructor};
 use crate::graph::GraphResolver;
 use crate::parse::{FileParseResult, ParsedCall, TreeSitterParser};
 use crate::walker::{FileWalker, SourceFile};
@@ -47,6 +48,8 @@ pub struct BuildReport {
     pub edges_indexed: usize,
     /// Entrypoints detected.
     pub entrypoints_indexed: usize,
+    /// Flows auto-discovered.
+    pub flows_indexed: usize,
     /// Path to `.repoctx/` output directory.
     pub output_dir: String,
 }
@@ -132,6 +135,20 @@ impl BuildPipeline {
         store.clear_entrypoints()?;
         let entrypoints_indexed = self.index_entrypoints(&store, &all_symbols)?;
 
+        let call_edges: Vec<CallEdge> = edges
+            .iter()
+            .map(|e| CallEdge {
+                src: e.src_symbol_id.clone(),
+                dst: e.dst_symbol_id.clone(),
+            })
+            .collect();
+        let discovered_flows = FlowReconstructor::reconstruct(&all_symbols, &call_edges);
+        store.clear_flows()?;
+        for flow in &discovered_flows {
+            store.insert_flow(flow)?;
+        }
+        let flows_indexed = discovered_flows.len();
+
         let writer = ArtifactWriter::new(self.paths.clone());
         let (symbols, dependencies, flows, entrypoints, architecture) = store.export_artifacts()?;
 
@@ -148,6 +165,7 @@ impl BuildPipeline {
             symbols_indexed,
             edges_indexed: edges.len(),
             entrypoints_indexed,
+            flows_indexed,
             output_dir: writer.output_dir().display().to_string(),
         })
     }
