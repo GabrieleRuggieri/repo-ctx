@@ -1257,6 +1257,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "ignore",
+ "regex",
  "repoctx-query",
  "repoctx-schema",
  "repoctx-store",
@@ -1280,7 +1281,10 @@ name = "repoctx-mcp"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "repoctx-core",
  "repoctx-query",
+ "repoctx-schema",
+ "repoctx-store",
  "rmcp",
  "schemars",
  "serde",

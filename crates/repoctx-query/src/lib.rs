@@ -8,4 +8,4 @@ pub mod types;
 
 pub use engine::QueryEngine;
 pub use error::QueryError;
-pub use types::{ContextResult, DependenciesResult, FlowResult, ImpactResult};
+pub use types::{ContextResult, DependenciesResult, FlowResult, ImpactResult, SummarySource};

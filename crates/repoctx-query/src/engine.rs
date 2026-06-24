@@ -6,7 +6,7 @@ use repoctx_schema::artifacts::SymbolRecord;
 use repoctx_store::{IndexStore, RepoCtxPaths};
 
 use crate::error::QueryError;
-use crate::types::{ContextResult, DependenciesResult, FlowResult, ImpactResult};
+use crate::types::{ContextResult, DependenciesResult, FlowResult, ImpactResult, SummarySource};
 
 /// Read-only query surface over a built `.repoctx/` index.
 pub struct QueryEngine {
@@ -113,7 +113,12 @@ impl QueryEngine {
             Vec::new()
         };
 
-        Ok(FlowResult { flow, suggestions })
+        Ok(FlowResult {
+            flow,
+            suggestions,
+            enriched_description: None,
+            description_source: SummarySource::Deterministic,
+        })
     }
 
     /// Builds a compact context bundle for LLM consumption.
@@ -150,6 +155,8 @@ impl QueryEngine {
         Ok(ContextResult {
             symbol: root,
             responsibility,
+            enriched_summary: None,
+            summary_source: SummarySource::Deterministic,
             related_components,
             external_dependencies,
             invariants,

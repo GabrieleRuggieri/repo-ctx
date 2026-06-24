@@ -23,8 +23,8 @@
 | ID | Area | Task |
 |---|---|---|
 | P1-1 | Embeddings | ONNX locale (BGE-small) + `sqlite-vec` |
-| P1-2 | MCP | **Sampling** per enrichment nomi/summary (host model) |
-| P1-3 | Security | Secret redaction prima di sampling |
+| P1-2 | MCP | **Sampling** per enrichment nomi/summary (host model) | ✅ lazy + cache SQLite |
+| P1-3 | Security | Secret redaction prima di sampling | ✅ v0 regex in `redact.rs` |
 | P1-4 | Workspace | Multi-repo manifest + cross-repo linker |
 | P1-5 | Distribuzione | `cargo-dist`, Homebrew tap, npm wrapper |
 | P1-6 | Bench | Fixture small→huge + budget CI (200ms incremental, 100ms query p95) |
@@ -43,9 +43,9 @@
 
 ## Prossimo consigliato
 
-1. **P1-2** — MCP sampling per enrichment lazy
-2. **P1-6** — benchmark fixture + budget CI
-3. **P1-1** — embeddings ONNX + sqlite-vec
+1. **P1-6** — benchmark fixture + budget CI
+2. **P1-1** — embeddings ONNX + sqlite-vec
+3. **P1-7** — `repoctx build --watch`
 
 ---
 

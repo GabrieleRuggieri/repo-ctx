@@ -1,5 +1,6 @@
 //! RepoCtx MCP server — JSON-RPC over stdio for AI agent integration.
 
+mod sampling;
 mod server;
 
 use std::path::PathBuf;

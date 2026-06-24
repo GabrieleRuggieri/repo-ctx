@@ -40,6 +40,7 @@ repoctx-core = { path = "crates/repoctx-core" }
 repoctx-query = { path = "crates/repoctx-query" }
 repoctx-schema = { path = "crates/repoctx-schema" }
 repoctx-store = { path = "crates/repoctx-store" }
+regex = "1"
 rmcp = { version = "1.8", features = ["server", "transport-io", "macros"] }
 schemars = "1.2"
 jsonschema = "0.29"

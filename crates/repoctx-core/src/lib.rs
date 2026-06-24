@@ -13,6 +13,7 @@ pub mod graph;
 pub mod ids;
 pub mod language;
 pub mod parse;
+pub mod redact;
 pub mod walker;
 
 pub use flow::FlowReconstructor;
@@ -23,3 +24,4 @@ pub use ids::{
 pub use build::{BuildOptions, BuildPipeline, BuildReport};
 pub use domain::DomainEditor;
 pub use error::CoreError;
+pub use redact::redact_secrets;

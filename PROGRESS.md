@@ -193,3 +193,22 @@
 ### Note
 
 - P0 MVP core completo — prossimo step: P1-2 MCP sampling o P1-6 benchmark
+
+---
+
+## 2026-06-23 — Sessione 10: MCP sampling enrichment (branch `feature/mcp-sampling-enrichment`)
+
+### Completato
+
+- **Tabella `enrichments`** in SQLite per cache lazy di summary LLM
+- **`redact.rs`**: redazione base segreti prima del sampling (API key, Bearer, sk-*, PEM)
+- **`repoctx-mcp::sampling`**: enrichment lazy via `sampling/createMessage` del host
+  - `get_context` → `enriched_summary` opzionale
+  - `get_flow` → `enriched_description` opzionale
+  - Fallback deterministico se host senza sampling
+- **`SummarySource`** in output query (`deterministic` | `mcp_sampling`)
+
+### Verificato
+
+- 38 test totali passano (`cargo test --all`)
+- `cargo clippy` pulito

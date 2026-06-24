@@ -15,6 +15,19 @@ use crate::error::StoreError;
 /// User-refined domain: `(flow_id, display_name, members)`.
 pub type DomainOverride = (String, String, Vec<(String, String)>);
 
+/// Cached LLM or deterministic text enrichment for a symbol or flow.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EnrichmentRecord {
+    /// `symbol` or `flow`.
+    pub entity_kind: String,
+    /// Stable entity id.
+    pub entity_id: String,
+    /// Human-readable summary prose.
+    pub summary: String,
+    /// `deterministic` or `mcp_sampling`.
+    pub source: String,
+}
+
 /// Embedded SQLite index for symbols, edges, flows, and file hashes.
 pub struct IndexStore {
     conn: Connection,
@@ -124,6 +137,14 @@ impl IndexStore {
             CREATE TABLE IF NOT EXISTS meta (
                 key   TEXT PRIMARY KEY,
                 value TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS enrichments (
+                entity_kind TEXT NOT NULL,
+                entity_id   TEXT NOT NULL,
+                summary     TEXT NOT NULL,
+                source      TEXT NOT NULL DEFAULT 'mcp_sampling',
+                PRIMARY KEY (entity_kind, entity_id)
             );
             ",
         )?;
@@ -555,6 +576,44 @@ impl IndexStore {
         Ok(rows)
     }
 
+    /// Loads a cached enrichment summary, if present.
+    pub fn get_enrichment(
+        &self,
+        entity_kind: &str,
+        entity_id: &str,
+    ) -> Result<Option<EnrichmentRecord>, StoreError> {
+        let mut stmt = self.conn.prepare(
+            "SELECT entity_kind, entity_id, summary, source
+             FROM enrichments WHERE entity_kind = ?1 AND entity_id = ?2",
+        )?;
+        let record = stmt
+            .query_row(params![entity_kind, entity_id], |row| {
+                Ok(EnrichmentRecord {
+                    entity_kind: row.get(0)?,
+                    entity_id: row.get(1)?,
+                    summary: row.get(2)?,
+                    source: row.get(3)?,
+                })
+            })
+            .optional()?;
+        Ok(record)
+    }
+
+    /// Persists an enrichment summary (lazy MCP sampling cache).
+    pub fn upsert_enrichment(&self, record: &EnrichmentRecord) -> Result<(), StoreError> {
+        self.conn.execute(
+            "INSERT OR REPLACE INTO enrichments (entity_kind, entity_id, summary, source)
+             VALUES (?1, ?2, ?3, ?4)",
+            params![
+                record.entity_kind,
+                record.entity_id,
+                record.summary,
+                record.source,
+            ],
+        )?;
+        Ok(())
+    }
+
     /// Replaces flow steps for an existing flow.
     pub fn replace_flow(&self, flow: &FlowRecord) -> Result<(), StoreError> {
         self.conn.execute(
@@ -885,5 +944,20 @@ mod tests {
         let loaded = store.load_symbols().unwrap();
         assert_eq!(loaded.len(), 1);
         assert_eq!(loaded[0].name, "main");
+    }
+
+    #[test]
+    fn enrichment_roundtrip() {
+        let dir = tempdir().unwrap();
+        let store = IndexStore::open(dir.path().join("index.db")).unwrap();
+        let record = EnrichmentRecord {
+            entity_kind: "symbol".into(),
+            entity_id: "sym1".into(),
+            summary: "Handles user checkout.".into(),
+            source: "mcp_sampling".into(),
+        };
+        store.upsert_enrichment(&record).unwrap();
+        let loaded = store.get_enrichment("symbol", "sym1").unwrap().unwrap();
+        assert_eq!(loaded.summary, "Handles user checkout.");
     }
 }

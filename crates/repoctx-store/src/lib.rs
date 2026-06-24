@@ -9,6 +9,6 @@ pub mod error;
 pub mod paths;
 
 pub use artifacts::ArtifactWriter;
-pub use db::{DomainOverride, IndexStore};
+pub use db::{DomainOverride, EnrichmentRecord, IndexStore};
 pub use error::StoreError;
 pub use paths::RepoCtxPaths;

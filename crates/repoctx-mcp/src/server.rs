@@ -7,11 +7,14 @@ use repoctx_query::QueryEngine;
 use rmcp::{
     handler::server::{tool::ToolRouter, wrapper::Parameters},
     model::{CallToolResult, Content, ErrorCode},
-    tool, tool_handler, tool_router, ErrorData as McpError, ServerHandler, ServiceExt,
+    tool, tool_handler, tool_router, ErrorData as McpError, Peer, RoleServer, ServerHandler,
+    ServiceExt,
 };
 use schemars::JsonSchema;
 use serde::Deserialize;
 use tracing::info;
+
+use crate::sampling::{apply_flow_enrichment, apply_symbol_enrichment};
 
 /// Shared server state: repository root for query resolution.
 #[derive(Clone)]
@@ -101,14 +104,17 @@ impl RepoCtxMcpServer {
     async fn get_context(
         &self,
         params: Parameters<GetContextParams>,
+        peer: Peer<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
         let engine = self.engine();
+        let repo_root = self.repo_root.as_path().to_path_buf();
         let symbol = params.0.symbol;
         let budget = params.0.budget;
-        let result = tokio::task::spawn_blocking(move || engine.context(&symbol, budget))
+        let mut result = tokio::task::spawn_blocking(move || engine.context(&symbol, budget))
             .await
             .map_err(|e| McpError::new(ErrorCode::INTERNAL_ERROR, e.to_string(), None))?
             .map_err(Self::map_query_error)?;
+        result = apply_symbol_enrichment(&peer, &repo_root, result).await;
         Self::json_result(&result)
     }
 
@@ -133,13 +139,16 @@ impl RepoCtxMcpServer {
     async fn get_flow(
         &self,
         params: Parameters<GetFlowParams>,
+        peer: Peer<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
         let engine = self.engine();
+        let repo_root = self.repo_root.as_path().to_path_buf();
         let domain = params.0.domain;
-        let result = tokio::task::spawn_blocking(move || engine.flow(&domain))
+        let mut result = tokio::task::spawn_blocking(move || engine.flow(&domain))
             .await
             .map_err(|e| McpError::new(ErrorCode::INTERNAL_ERROR, e.to_string(), None))?
             .map_err(Self::map_query_error)?;
+        result = apply_flow_enrichment(&peer, &repo_root, result).await;
         Self::json_result(&result)
     }
 
@@ -163,7 +172,7 @@ impl RepoCtxMcpServer {
 #[tool_handler(
     name = "repoctx-mcp",
     version = "0.1.0",
-    instructions = "RepoCtx MCP server. Run `repoctx build` in the target repository first. Tools: get_context, get_impact, get_flow, get_dependencies."
+    instructions = "RepoCtx MCP server. Run `repoctx build` in the target repository first. Tools: get_context, get_impact, get_flow, get_dependencies. When the host supports MCP sampling, get_context and get_flow lazily enrich summaries via the host model and cache them locally."
 )]
 impl ServerHandler for RepoCtxMcpServer {}
 
