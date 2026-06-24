@@ -1,8 +1,18 @@
-# RepoCtx — Architecture (Agreed v1.0)
+# RepoCtx — Architecture (Agreed v1.1)
 
-> Status: **AGREED — source of truth for implementation.** All decisions locked (see §9).
+> Status: **AGREED — source of truth for implementation.** Core decisions locked (see §9).
 > Architectural style: **local-first, deterministic-core, AI-augmented, agent-agnostic**.
 > License target: **Apache-2.0** (permissive + explicit patent grant).
+>
+> **v1.1 evolution (additive — does not change the locked core):** RepoCtx adopts a **three-layer
+> model**: the existing *Deterministic Core* (ground truth) now feeds a **Knowledge Layer (Repo Wiki)**
+> — a persistent, compounding set of markdown pages anchored to real symbols and authored lazily via
+> MCP sampling — and a **Context Assembly** surface that returns *code snippets + wiki + impact* within
+> a token budget. The deterministic graph **grounds** wiki generation and **lints** pages against the
+> code, so the wiki cannot silently drift. This is the deliberate union of two patterns (deterministic
+> code-graph + LLM-Wiki) and closes the gap each has alone. A **wiki-only** product (markdown without a
+> verifying graph) is explicitly **out of scope** — the graph-grounded verification is the point. See
+> §3.5–§3.6 and decision #17.
 >
 > **Decisions locked in this revision**
 > - **Rust-first core** — chosen for the "small-to-huge repo" range, lowest-possible latency, and
@@ -11,7 +21,10 @@
 > - **Multi-repo / workspace** model is first-class (cross-repo flow resolution).
 > - **LLM enrichment is host-delegated only** via **MCP sampling** (uses the agent's own model, e.g.
 >   Cursor / Claude Code) — **no bundled LLM, no Ollama, no remote provider, no API keys**. Embeddings
->   use one small local ONNX model (index only). Enrichment is lazy and optional.
+>   use one small local ONNX model (index only). Enrichment — **including wiki authoring** — is lazy
+>   and optional.
+> - **Knowledge Layer (Repo Wiki):** persistent markdown pages grounded in the graph; generated lazily
+>   via MCP sampling; auto-lintable against the code. Additive: removing it loses prose, never facts.
 > - **Zero telemetry. No cloud, no team-sync** — purely local.
 > - Cross-service boundaries: **static + heuristic + AI inference** (no runtime tracing in v1).
 > - **Zero-config by default**: domains/flows auto-discovered; refinement via CLI, optional `repoctx.toml`.
@@ -21,12 +34,23 @@
 ## 1. High-Level Overview
 
 RepoCtx is a **local intelligence layer** for codebases. It ingests a repository, builds a
-deterministic structural model (symbols, dependencies, flows, entry points), persists it as a
-versioned, machine-readable store, and exposes it to humans and AI agents through three surfaces:
+deterministic structural model (symbols, dependencies, flows, entry points), compiles a **grounded
+knowledge wiki** on top of it, persists both as a versioned, machine-readable store, and exposes them
+to humans and AI agents through three surfaces:
 
-1. A **CLI** (`repoctx build | impact | flow | context`).
-2. A set of **versioned JSON artifacts** under `.repoctx/`.
+1. A **CLI** (`repoctx build | impact | flow | context | wiki`).
+2. A set of **versioned artifacts** under `.repoctx/` (JSON graph + `wiki/*.md`).
 3. An **MCP server** (`repoctx-mcp`) speaking JSON-RPC over stdio.
+
+Conceptually there are **three knowledge layers**, in increasing abstraction:
+
+| Layer | Owner | Answers | Persistence |
+|---|---|---|---|
+| **Deterministic Core** | RepoCtx (code-derived) | *What is true?* (symbols, edges, flows, impact) | JSON + SQLite, byte-identical rebuilds |
+| **Knowledge Layer (Repo Wiki)** | Host LLM, **grounded by the core** | *What does it mean? Why? Gotchas?* | `.repoctx/wiki/*.md`, compounding |
+| **Context Assembly** | RepoCtx (retrieval) | *What code + knowledge do I need now?* | computed per query, within a token budget |
+
+The core verifies the wiki (grounding + lint), and the wiki + core + raw source feed Context Assembly.
 
 The system is organized in layers, each with a single responsibility and a stable internal contract:
 
@@ -51,12 +75,18 @@ flowchart TB
     subgraph AI["AI-Augmentation Layer (optional, additive, lazy)"]
         EMB["Embeddings\n(local ONNX, index only)"]
         SUM["Semantic enrichment\n(domain names, summaries)"]
+        WIKI["Knowledge Layer / Repo Wiki\n(grounded markdown pages)"]
+        LINT["Wiki Lint\n(verify pages vs graph)"]
         SAMP["LLM text gen:\nMCP sampling — host model ONLY\n(no bundled LLM)"]
+    end
+
+    subgraph Assemble["Context Assembly (retrieval, per query)"]
+        BUNDLE["Bundle builder\ncode snippets + wiki + impact\n(token budget)"]
     end
 
     subgraph Store["Repository Memory (local persistence)"]
         IDX[("Index DB\nSQLite + vector")]
-        ART["Versioned JSON artifacts\n.repoctx/*.json"]
+        ART["Versioned artifacts\n.repoctx/*.json + wiki/*.md"]
     end
 
     subgraph Surfaces["Access Surfaces"]
@@ -72,13 +102,23 @@ flowchart TB
     GRAPH --> IMPACT
     GRAPH --> EMB
     GRAPH --> SUM
+    GRAPH --> WIKI
+    WIKI -.-> SAMP
     SUM -.-> SAMP
+    WIKI --> LINT
+    GRAPH --> LINT
+    GRAPH --> BUNDLE
+    WIKI --> BUNDLE
+    SRC --> BUNDLE
     EMB --> IDX
     SUM --> IDX
+    WIKI --> ART
     GRAPH --> IDX
     IDX --> ART
     IDX --> CLI
     IDX --> MCP
+    BUNDLE --> CLI
+    BUNDLE --> MCP
     ART --> CLI
 
     AGENTS["AI Agents\n(Claude Code / Cursor / Codex)"] --> MCP
@@ -88,8 +128,10 @@ flowchart TB
 
 **Design tenets enforced by this structure**
 - The **Deterministic Core never touches the network**. Reproducibility and privacy are structural, not configurable.
-- The **AI-Augmentation Layer is strictly additive**: removing it degrades quality (fewer human-friendly names/summaries) but never breaks structural correctness.
-- The **artifacts (`.repoctx/*.json`) are the public contract**; the index DB is an internal, rebuildable cache.
+- The **AI-Augmentation Layer is strictly additive**: removing it degrades quality (fewer human-friendly names/summaries, no wiki prose) but never breaks structural correctness.
+- The **Knowledge Layer is grounded and verifiable**: every wiki page anchors to symbol ids from the core, and `wiki lint` re-checks page claims against the live graph. The graph is always the tie-breaker; on conflict, the page is flagged stale, never the graph.
+- **Context Assembly never invents code**: snippets are sliced from the real source on disk; only prose (wiki) can be model-authored.
+- The **artifacts (`.repoctx/*.json` + `.repoctx/wiki/*.md`) are the public contract**; the index DB is an internal, rebuildable cache.
 
 ---
 
@@ -193,8 +235,11 @@ sequenceDiagram
 - **Graph Builder** — materializes three logical graphs (symbol graph, dependency graph, call graph).
 - **Flow Reconstructor** — stitches call/data paths into business flows; flags external-system & cross-repo boundaries.
 - **Impact Engine** — forward/backward reachability over edges; correlates tests and risk zones; traverses across repos.
-- **AI-Augmentation** — embeddings + optional LLM naming/summarization (via MCP sampling or local model); always reversible and additive.
-- **Repository Memory** — SQLite index (rebuildable cache) + JSON artifacts (stable, versioned output).
+- **AI-Augmentation** — embeddings + optional LLM naming/summarization (via MCP sampling); always reversible and additive.
+- **Knowledge Layer (Repo Wiki)** — compiles persistent markdown pages (module/service/flow/concept) from the graph, authored lazily via MCP sampling, with each page anchored to symbol ids. See §3.5.
+- **Wiki Lint** — re-validates pages against the current graph: flags stale claims, contradictions, orphan pages, and broken cross-links. The graph is ground truth. See §3.5.
+- **Context Assembly** — builds a per-query bundle (code snippets + relevant wiki + impact set) packed within a token budget. Slices real source; never fabricates code. See §3.6.
+- **Repository Memory** — SQLite index (rebuildable cache) + JSON artifacts + wiki markdown (stable, versioned output).
 - **Access Surfaces** — CLI and MCP server share one Query Engine; no logic is duplicated.
 
 ### 3.4 Multi-repo / workspace model
@@ -211,6 +256,109 @@ then the **Cross-repo Linker** stitches a unified graph using deterministic **se
 Cross-repo edges are tagged `boundary = network|queue|shared-lib` and `confidence` (since dynamic
 endpoints are inferred). This lets `flow payment` span repos and `impact` propagate across service
 boundaries. Single-repo usage is just a workspace of size 1 — no special-casing.
+
+### 3.5 Knowledge Layer (Repo Wiki)
+
+The wiki is a **persistent, compounding** set of markdown pages that explain *intent, conventions and
+gotchas* — the things the graph cannot infer from structure alone. It is the LLM-Wiki pattern
+(Karpathy / Microsoft `llmwiki`) but **grounded in the deterministic graph**, which is what makes it
+trustworthy rather than drift-prone.
+
+**Page model.** Each page is a markdown file under `.repoctx/wiki/` with YAML frontmatter:
+
+```markdown
+---
+id: wiki_order_service
+kind: service            # module | service | flow | concept | overview
+symbol_ids: [sym_a1b2, sym_c3d4]   # anchors into the deterministic graph
+source: mcp_sampling     # deterministic | mcp_sampling
+graph_fingerprint: 9f12… # hash of the anchored subgraph at authoring time
+see_also: [wiki_billing_client, wiki_payment_flow]
+---
+
+## OrderService
+Responsibility, invariants, known gotchas, links to flows…
+```
+
+- `index.md` is the **router / table of contents** — an agent reads it first, then opens only the
+  pages it needs (no vector DB required at small/medium scale; embeddings still available for ranking).
+- `symbol_ids` make pages **navigable both ways**: from a symbol you can find its page, and a page can
+  resolve to exact code locations.
+
+**Authoring (ingest).** `repoctx build` never authors prose. Pages are created/updated **lazily via
+MCP sampling** the first time an area is queried, or eagerly via `repoctx wiki sync`. The prompt is
+**grounded**: it includes the deterministic facts for the anchored subgraph (symbols, edges, flows,
+entrypoints) plus redacted source excerpts, so the model summarizes *real* structure instead of
+guessing. Output is cached in the store and written to markdown. Without an MCP host, the layer is
+simply absent — the core and JSON artifacts are unaffected.
+
+**Template slots (not free-form wiki).** Page bodies use a fixed skeleton per `kind`. Sections such as
+Routes, Callers, Impact, and See-also are **compiled from the graph**; only designated slots (e.g.
+`## Intent & gotchas`) are LLM-authored. This avoids becoming a generic LLM Wiki clone where structure
+drifts with every edit.
+
+**Claim blocks.** Structural assertions are machine-readable for deterministic lint:
+
+```markdown
+<!-- repoctx:claim calls sym_billing_client source=graph -->
+```
+
+Lint compares claims to live edges without parsing natural language.
+
+**Watch-triggered sync.** After `repoctx build --watch`, pages whose `graph_fingerprint` no longer
+matches the anchored subgraph are queued for `wiki sync`. Maintenance is event-driven, not manual.
+
+**Verification (lint).** Because the graph is ground truth, `repoctx wiki lint` can do what a pure LLM
+wiki cannot:
+- **Stale detection** — recompute each page's `graph_fingerprint`; if the anchored subgraph changed,
+  the page is flagged for re-sync.
+- **Contradiction detection** — heuristics + optional sampling compare page claims (e.g. "calls
+  BillingClient") against actual edges; mismatches are reported.
+- **Orphan / broken links** — pages with no inbound `see_also` and dangling cross-links are surfaced.
+
+Lint runs locally and deterministically for the structural checks; only optional semantic checks use
+sampling. Staleness is a first-class state, so the wiki **degrades loudly, never silently**.
+
+**Incrementality.** Wiki staleness is keyed to the same content hashes used by incremental build:
+touching a file marks only the pages whose anchored symbols changed, keeping re-sync cheap.
+
+### 3.6 Context Assembly (code + knowledge + impact)
+
+This is the "code in context" surface — the answer to *"give me what I need to fix this bug"* without
+dumping the repo. Given a symbol (or domain), a **token budget**, and an optional **task mode**, the
+assembler builds a ranked bundle:
+
+| Task mode | Optimized for |
+|---|---|
+| `fix` | Focused snippets, callers, tests, impact depth ~2 |
+| `refactor` | Deep impact, cross-module edges |
+| `onboard` | Flow overview + wiki, fewer snippets |
+
+```mermaid
+flowchart LR
+    Q["context(symbol, budget, task)"] --> R["Resolve symbol → graph node"]
+    R --> N["Select neighborhood\n(task-specific depth)"]
+    N --> RANK["Rank by relevance\n(edge proximity + embedding similarity)"]
+    RANK --> SLICE["Slice real source snippets\n(from disk, with line ranges)"]
+    R --> W["Attach grounded wiki page(s)"]
+    R --> I["Attach impact set + related tests"]
+    SLICE --> PACK["Pack to token budget\n(greedy by relevance)"]
+    W --> PACK
+    I --> PACK
+    PACK --> OUT["Context bundle\n(markdown default / JSON)"]
+```
+
+- **Code is sliced from the real files on disk** (never model-generated), with `path` + line ranges so
+  the agent can open the full file if needed.
+- **Budgeting** is greedy by relevance: the most relevant snippet, the symbol's wiki page, and the
+  impact set are included first; lower-relevance neighbors fill the remaining budget.
+- **Primary output is markdown** (`--format md`) — one paste-ready file for agents. JSON remains for
+  tooling and MCP structured fields.
+- The bundle is the union of all three layers — *verified structure + meaning + code* — which is what
+  distinguishes RepoCtx from RAG (no persistent meaning) and from a pure wiki (no verified code).
+
+**v0.1 today:** `repoctx context` returns symbol metadata, neighbors, and optional sampling enrichment.
+Full snippet packing and markdown output ship in **v0.2** (BACKLOG P1-11).
 
 ---
 
@@ -232,6 +380,8 @@ erDiagram
     SYMBOL ||--o| EMBEDDING : has
     DOMAIN_CONCEPT ||--o{ SYMBOL : labels
     SNAPSHOT ||--o{ FILE : "captured in"
+    WIKI_PAGE }o--o{ SYMBOL : anchors
+    WIKI_PAGE ||--o{ WIKI_LINK : "cross-references"
 
     WORKSPACE {
         string id PK
@@ -308,6 +458,20 @@ erDiagram
         string vcs_head
         string schema_version
     }
+    WIKI_PAGE {
+        string id PK
+        string kind "module|service|flow|concept|overview"
+        string title
+        string path "relative .repoctx/wiki/*.md"
+        string source "deterministic|mcp_sampling"
+        string graph_fingerprint "hash of anchored subgraph at authoring time"
+        string content_hash
+        bool   stale
+    }
+    WIKI_LINK {
+        string src_page_id FK
+        string dst_page_id FK
+    }
 ```
 
 ### Artifact mapping (`.repoctx/`)
@@ -318,10 +482,19 @@ erDiagram
 | `dependencies.json` | EDGE (imports/calls) | Dependency graph |
 | `flows.json` | FLOW + FLOW_STEP | Reconstructed business flows |
 | `entrypoints.json` | ENTRYPOINT | Detected entry points |
+| `cross_repo.json` | cross-repo EDGE | Workspace service-boundary edges |
+| `wiki/index.md` | WIKI_PAGE (router) | Table of contents / page router |
+| `wiki/*.md` | WIKI_PAGE | Grounded knowledge pages (frontmatter anchors symbol ids) |
 
-> Every artifact embeds `schemaVersion`. Schema changes follow **semantic versioning**; breaking
-> changes bump the major and ship a migration note. The `source`/`confidence` fields distinguish
-> deterministic facts from AI-inferred enrichment so consumers can trust/weight accordingly.
+> Every **JSON** artifact embeds `schemaVersion` and is produced deterministically (byte-identical
+> rebuilds). Schema changes follow **semantic versioning**; breaking changes bump the major and ship a
+> migration note. The `source`/`confidence` fields distinguish deterministic facts from AI-inferred
+> enrichment so consumers can trust/weight accordingly.
+>
+> **Wiki markdown** is the one artifact class that is *model-authored* (via MCP sampling) and therefore
+> **not** byte-deterministic. Its frontmatter (`source`, `graph_fingerprint`, `stale`) lets consumers
+> tell verified facts from generated prose and detect drift. The deterministic core never depends on
+> the wiki; the wiki always depends on (and is verified against) the core.
 
 ### Domains & flows: zero-config first (final decision)
 Simplicity is a hard requirement: **the tool must work with no configuration file at all.** A domain
@@ -355,23 +528,36 @@ Verb-based, scriptable, machine-friendly. Every command supports `--json` for st
 repoctx build [--incremental] [--no-embeddings] [--watch]
 repoctx impact <symbol>   [--depth N] [--json]
 repoctx flow   <domain>   [--json]
-repoctx context <symbol>  [--budget <tokens>] [--json]
-repoctx domain  rename <auto-id> <name>        # zero-config refinement, persisted in the store
-repoctx domain  add    <name> <path|symbol>... # no hand-written config file required
+repoctx context <symbol>  [--budget <tokens>] [--format md|json] [--task fix|refactor|onboard] [--json]
+repoctx wiki   sync  [<path|symbol>...]        # v0.2 — author/update grounded pages (MCP host)
+repoctx wiki   lint  [--json]                  # v0.2 — stale/contradictory/orphan pages vs graph
+repoctx wiki   show  <page|symbol>             # v0.2 — print a page (symbol → page)
+repoctx domain  rename <auto-id> <name>
+repoctx domain  add    <name> <path|symbol>...
 ```
+
+**Shipped (v0.1):** `build`, `impact`, `flow`, `context` (metadata JSON), `domain`, `workspace build`.
+
+**Planned (v0.2):** `context --format md` with real snippets, full `wiki` subcommands, `get_wiki`.
+
+`context` (v0.2) returns the assembled bundle (code snippets + wiki + impact) packed to `--budget`.
+`wiki sync` requires an MCP host with sampling; structural `wiki lint` runs fully locally.
 
 ### 5.2 MCP contract (primary agent interface)
 JSON-RPC 2.0 over **stdio** (local, no open port by default). Tools mirror the README:
 
-| Tool | Input | Output (token-optimized) |
-|---|---|---|
-| `get_context` | `{ symbol, budget? }` | responsibility, related components, external deps, invariants |
-| `get_impact` | `{ symbol, depth? }` | affected modules, downstream deps, related tests, risk zones |
-| `get_flow` | `{ domain }` | end-to-end path, service interactions, external systems |
-| `get_dependencies` | `{ symbol, direction? }` | direct/transitive dependencies |
+| Tool | Input | Output (token-optimized) | Status |
+|---|---|---|---|
+| `get_impact` | `{ symbol, depth? }` | affected modules, downstream deps, related tests, risk zones | **v0.1** |
+| `get_flow` | `{ domain }` | end-to-end path, service interactions, external systems | **v0.1** |
+| `get_dependencies` | `{ symbol, direction? }` | direct/transitive dependencies | **v0.1** |
+| `get_context` | `{ symbol, budget?, task?, format? }` | v0.1: metadata + neighbors; v0.2: markdown bundle with snippets + wiki + impact | **partial** |
+| `get_wiki` | `{ page? , symbol? }` | grounded markdown page (or router index), with `stale` flag | **v0.2** |
 
-The server also declares the **`sampling` client capability**: when enrichment needs an LLM, it issues
-a sampling request so the **host agent's model** (e.g. Cursor) runs the completion — no embedded keys.
+The server also declares the **`sampling` client capability**: when enrichment **or wiki authoring**
+needs an LLM, it issues a sampling request so the **host agent's model** (e.g. Cursor) runs the
+completion — no embedded keys. `get_context` slices real source for snippets; only wiki prose is
+model-authored.
 
 ### 5.3 Artifact contract
 The `.repoctx/*.json` files are a **read API for any tool**, versioned via `schemaVersion`. This makes RepoCtx consumable even without running its process (CI checks, dashboards, other agents).
@@ -462,5 +648,13 @@ Every decision below is settled; there are **no open questions** blocking develo
 | 14 | Distribution | **Homebrew** + **npm wrapper** (`npx repoctx`) as the two primary channels; also signed GitHub Release binaries (`cargo-dist`) and `cargo install`. |
 | 15 | Platforms | **macOS & Linux tier-1** (x64 + arm64, fully CI-tested); **Windows tier-2** (supported & CI-built, issues triaged after tier-1). |
 | 16 | Artifact schema | JSON Schema with `schemaVersion`, SemVer'd independently from the CLI. |
+| 17 | Knowledge model | **Three layers**: Deterministic Core (ground truth) → grounded **Repo Wiki** (markdown, MCP-authored, lazy) → **Context Assembly** (code + wiki + impact, budgeted). The graph **grounds and lints** the wiki. **Wiki-only is out of scope.** |
+| 18 | Context output | `get_context` / `repoctx context` return **real code snippets** (sliced from disk) + grounded wiki + impact within a token budget. Code is never model-generated; only wiki prose is. **v0.1 ships metadata; full bundle in v0.2.** |
+| 19 | Adoption-first delivery | Agents receive **one markdown bundle** per task (`--format md`, `--task fix\|refactor\|onboard`), not multiple tools to orchestrate. Primary workflow: `build` → MCP `get_impact`/`get_context` before edits. |
 
-This document is now the **agreed source of truth**. Implementation can begin against it.
+**v1.1 scope note (additive):** decisions #17–#18 extend, but do not alter, the locked core (#1–#16).
+The Deterministic Core, its determinism guarantees, the "no bundled LLM / MCP-sampling-only" rule, and
+the local-first/zero-telemetry posture are unchanged. The wiki and context-assembly layers are
+strictly additive: with no MCP host they are absent and the core behaves exactly as in v1.0.
+
+This document is the **agreed source of truth**. Implementation can begin against it.

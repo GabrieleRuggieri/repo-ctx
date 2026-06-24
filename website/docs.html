@@ -28,10 +28,12 @@
       </a>
       <nav class="nav-links">
         <a href="index.html" data-i18n="nav.home">Home</a>
-        <a href="#cli" data-i18n="docs.nav.cli">CLI</a>
+        <a href="#layers" data-i18n="docs.nav.layers">Layers</a>
+        <a href="#wiki" data-i18n="docs.nav.wiki">Wiki</a>
         <a href="#mcp" data-i18n="docs.nav.mcp">MCP</a>
         <a href="#principles" data-i18n="docs.nav.principles">Principles</a>
         <a href="#architecture" data-i18n="docs.nav.architecture">Architecture</a>
+        <a href="#adoption" data-i18n="docs.nav.adoption">Adoption</a>
         <a href="#install" data-i18n="docs.nav.install">Install</a>
       </nav>
       <div class="nav-actions">
@@ -52,11 +54,14 @@
       <aside class="docs-sidebar glass-card">
         <nav class="docs-toc">
           <a href="#overview" data-i18n="docs.toc.overview">Overview</a>
+          <a href="#layers" data-i18n="docs.toc.layers">Three Layers</a>
           <a href="#cli" data-i18n="docs.toc.cli">CLI Reference</a>
+          <a href="#wiki" data-i18n="docs.toc.wiki">Knowledge Wiki</a>
           <a href="#mcp" data-i18n="docs.toc.mcp">MCP Integration</a>
           <a href="#artifacts" data-i18n="docs.toc.artifacts">Artifacts</a>
           <a href="#principles" data-i18n="docs.toc.principles">Design Principles</a>
           <a href="#architecture" data-i18n="docs.toc.architecture">Architecture</a>
+          <a href="#adoption" data-i18n="docs.toc.adoption">Adoption</a>
           <a href="#install" data-i18n="docs.toc.install">Installation</a>
         </nav>
       </aside>
@@ -64,7 +69,17 @@
       <article class="docs-content">
         <section id="overview" class="doc-section reveal">
           <h1 data-i18n="docs.overview.title">Documentation</h1>
-          <p class="lead" data-i18n="docs.overview.lead">RepoCtx is a developer-first CLI and local intelligence layer that builds a structured, semantic representation of your codebase.</p>
+          <p class="lead" data-i18n="docs.overview.lead">RepoCtx is a local intelligence layer that combines a verified code graph, a graph-grounded knowledge wiki, and context assembly that returns real source snippets for AI agents and developers.</p>
+        </section>
+
+        <section id="layers" class="doc-section reveal">
+          <h2 data-i18n="docs.layers.title">Three Knowledge Layers</h2>
+          <p data-i18n="docs.layers.desc">RepoCtx goes beyond plain LLM Wiki or RAG by grounding every knowledge page in a deterministic graph and verifying pages against live code.</p>
+          <div class="arch-stack">
+            <div class="arch-layer glass-card"><span class="arch-label" data-i18n="docs.layers.l3">Context Assembly</span><span data-i18n="docs.layers.l3d">Code snippets + wiki + impact, token-budgeted</span></div>
+            <div class="arch-layer glass-card"><span class="arch-label" data-i18n="docs.layers.l2">Grounded Repo Wiki</span><span data-i18n="docs.layers.l2d">Markdown pages anchored to symbol IDs, MCP-authored, lint-checked</span></div>
+            <div class="arch-layer glass-card"><span class="arch-label" data-i18n="docs.layers.l1">Deterministic Core</span><span data-i18n="docs.layers.l1d">Symbols, graph, flows, impact — from tree-sitter, no LLM</span></div>
+          </div>
         </section>
 
         <section id="cli" class="doc-section reveal">
@@ -82,8 +97,19 @@
   symbols.json
   flows.json
   dependencies.json
-  entrypoints.json</code></pre>
+  entrypoints.json
+  wiki/
+    index.md
+    *.md</code></pre>
           </div>
+
+          <h3 data-i18n="docs.cli.wiki.title">Knowledge wiki</h3>
+          <div class="code-block glass-card">
+            <pre><code>repoctx wiki sync
+repoctx wiki lint
+repoctx wiki show OrderService</code></pre>
+          </div>
+          <p data-i18n="docs.cli.wiki.desc">Sync creates/updates grounded markdown pages (lazy, via MCP host). Lint flags stale or contradictory pages against the live graph.</p>
 
           <h3 data-i18n="docs.cli.impact.title">Query impact</h3>
           <div class="code-block glass-card">
@@ -99,12 +125,12 @@
           </div>
           <p data-i18n="docs.cli.flow.desc">Shows end-to-end execution path, service interactions, and external systems.</p>
 
-          <h3 data-i18n="docs.cli.context.title">Generate AI-ready context</h3>
+          <h3 data-i18n="docs.cli.context.title">Context bundle (code included)</h3>
           <div class="code-block glass-card">
-            <div class="code-header"><span>terminal</span><button class="copy-btn" data-copy="repoctx context PaymentService">Copy</button></div>
-            <pre><code>repoctx context PaymentService</code></pre>
+            <div class="code-header"><span>terminal</span><button class="copy-btn" data-copy="repoctx context PaymentService --format md --budget 6000 --task fix">Copy</button></div>
+            <pre><code>repoctx context PaymentService --format md --budget 6000 --task fix</code></pre>
           </div>
-          <p data-i18n="docs.cli.context.desc">Outputs minimal structured context: domain responsibility, related components, external dependencies, constraints.</p>
+          <p data-i18n="docs.cli.context.desc">Returns wiki page + real code snippets + impact set, packed within the token budget. Enough source to fix a bug — not the whole repo.</p>
 
           <h3 data-i18n="docs.cli.domain.title">Domain refinement (optional)</h3>
           <div class="code-block glass-card">
@@ -112,6 +138,17 @@
 repoctx domain add payment src/billing/** PaymentService</code></pre>
           </div>
           <p data-i18n="docs.cli.domain.desc">Zero-config by default. Refine auto-discovered domains via CLI — no config file required.</p>
+        </section>
+
+        <section id="wiki" class="doc-section reveal">
+          <h2 data-i18n="docs.wiki.title">Grounded Repo Wiki</h2>
+          <p data-i18n="docs.wiki.desc">Unlike a plain LLM Wiki, every page is anchored to real symbol IDs from the deterministic graph. Pages compound over time but are verified — stale claims are flagged automatically.</p>
+          <ul class="check-list docs-check">
+            <li data-i18n="docs.wiki.li1">Pages authored lazily via MCP sampling (host model, no bundled LLM)</li>
+            <li data-i18n="docs.wiki.li2">graph_fingerprint detects when anchored code changed</li>
+            <li data-i18n="docs.wiki.li3">wiki lint compares page claims to live edges</li>
+            <li data-i18n="docs.wiki.li4">index.md routes agents to relevant pages first</li>
+          </ul>
         </section>
 
         <section id="mcp" class="doc-section reveal">
@@ -129,14 +166,15 @@ repoctx domain add payment src/billing/** PaymentService</code></pre>
                 </tr>
               </thead>
               <tbody>
-                <tr><td><code>get_context</code></td><td data-i18n="docs.mcp.t1">Structured context for a symbol</td></tr>
+                <tr><td><code>get_context</code></td><td data-i18n="docs.mcp.t1">Code snippets + wiki page + impact, packed to budget</td></tr>
+                <tr><td><code>get_wiki</code></td><td data-i18n="docs.mcp.t5">Grounded markdown page or index router</td></tr>
                 <tr><td><code>get_impact</code></td><td data-i18n="docs.mcp.t2">Change impact analysis</td></tr>
                 <tr><td><code>get_flow</code></td><td data-i18n="docs.mcp.t3">Business flow reconstruction</td></tr>
                 <tr><td><code>get_dependencies</code></td><td data-i18n="docs.mcp.t4">Direct and transitive dependencies</td></tr>
               </tbody>
             </table>
           </div>
-          <p data-i18n="docs.mcp.sampling">LLM text enrichment uses MCP sampling — the host agent's model (Cursor, Claude Code) handles naming and summaries. RepoCtx ships no LLM and holds no API keys.</p>
+          <p data-i18n="docs.mcp.sampling">Wiki authoring and text enrichment use MCP sampling — the host agent's model handles prose. RepoCtx ships no LLM, holds no API keys, and never generates code — only slices real source.</p>
         </section>
 
         <section id="artifacts" class="doc-section reveal">
@@ -156,6 +194,8 @@ repoctx domain add payment src/billing/** PaymentService</code></pre>
                 <tr><td><code>dependencies.json</code></td><td data-i18n="docs.artifacts.a3">Dependency graph</td></tr>
                 <tr><td><code>flows.json</code></td><td data-i18n="docs.artifacts.a4">Reconstructed business flows</td></tr>
                 <tr><td><code>entrypoints.json</code></td><td data-i18n="docs.artifacts.a5">Detected entry points</td></tr>
+                <tr><td><code>wiki/index.md</code></td><td data-i18n="docs.artifacts.a6">Wiki router / table of contents</td></tr>
+                <tr><td><code>wiki/*.md</code></td><td data-i18n="docs.artifacts.a7">Grounded knowledge pages (symbol-anchored)</td></tr>
               </tbody>
             </table>
           </div>
@@ -180,19 +220,49 @@ repoctx domain add payment src/billing/** PaymentService</code></pre>
               <h3 data-i18n="docs.principles.p4.title">Machine-Readable Outputs</h3>
               <p data-i18n="docs.principles.p4.desc">JSON-compatible, stable schema, versioned artifacts.</p>
             </div>
+            <div class="principle glass-card">
+              <h3 data-i18n="docs.principles.p5.title">Graph-Grounded Wiki</h3>
+              <p data-i18n="docs.principles.p5.desc">Wiki pages anchor to symbol IDs and are lint-checked against the live graph. The graph is always ground truth.</p>
+            </div>
           </div>
         </section>
 
         <section id="architecture" class="doc-section reveal">
           <h2 data-i18n="docs.arch.title">Architecture</h2>
-          <p data-i18n="docs.arch.desc">Rust-first core with tree-sitter parsing, SQLite index, and MCP server. Supports multi-repo workspaces and cross-service flow resolution.</p>
+          <p data-i18n="docs.arch.desc">Rust-first deterministic core, graph-grounded wiki, context assembly, SQLite index, MCP server. Multi-repo workspaces and cross-service linking.</p>
           <div class="arch-stack">
-            <div class="arch-layer glass-card"><span class="arch-label" data-i18n="docs.arch.l1">Surfaces</span><span>CLI · MCP (stdio) · JSON artifacts</span></div>
+            <div class="arch-layer glass-card"><span class="arch-label" data-i18n="docs.arch.l1">Surfaces</span><span>CLI · MCP (stdio) · JSON + wiki artifacts</span></div>
+            <div class="arch-layer glass-card"><span class="arch-label" data-i18n="docs.arch.l5">Assembly</span><span data-i18n="docs.arch.l5d">Context bundle builder (snippets + wiki + impact)</span></div>
+            <div class="arch-layer glass-card"><span class="arch-label" data-i18n="docs.arch.l6">Wiki</span><span data-i18n="docs.arch.l6d">Grounded markdown + lint engine</span></div>
             <div class="arch-layer glass-card"><span class="arch-label" data-i18n="docs.arch.l2">Store</span><span>SQLite + sqlite-vec · .repoctx/</span></div>
             <div class="arch-layer glass-card"><span class="arch-label" data-i18n="docs.arch.l3">Core</span><span>Parser · Resolver · Graph · Flow · Impact</span></div>
             <div class="arch-layer glass-card"><span class="arch-label" data-i18n="docs.arch.l4">Sources</span><span>Multi-language source · Git · Workspace</span></div>
           </div>
-          <p class="muted" data-i18n="docs.arch.note">Full architecture document available in the repository as Architecture.md.</p>
+          <p class="muted" data-i18n="docs.arch.note">Full architecture: <a href="https://github.com/GabrieleRuggieri/repo-ctx/blob/main/ARCHITECTURE.md">ARCHITECTURE.md</a> in the repository.</p>
+        </section>
+
+        <section id="adoption" class="doc-section reveal">
+          <h2 data-i18n="docs.adoption.title">Quick start</h2>
+          <p data-i18n="docs.adoption.desc">Three steps to wire RepoCtx into your agent workflow.</p>
+          <ol class="adoption-steps">
+            <li data-i18n="docs.adoption.s1">Install repoctx-cli and repoctx-mcp (Cargo, npm, or Homebrew).</li>
+            <li data-i18n="docs.adoption.s2">Run repoctx build in your repository root.</li>
+            <li data-i18n="docs.adoption.s3">Add repoctx-mcp to Cursor or Claude Code — the agent calls get_context before edits.</li>
+          </ol>
+          <h3 data-i18n="docs.adoption.mcpTitle">Cursor MCP config</h3>
+          <div class="code-block glass-card">
+            <div class="code-header"><span>.cursor/mcp.json</span><button class="copy-btn" data-copy='{"mcpServers":{"repoctx":{"command":"repoctx-mcp","env":{"REPOCTX_ROOT":"${workspaceFolder}"}}}}'>Copy</button></div>
+            <pre><code>{
+  "mcpServers": {
+    "repoctx": {
+      "command": "repoctx-mcp",
+      "env": {
+        "REPOCTX_ROOT": "${workspaceFolder}"
+      }
+    }
+  }
+}</code></pre>
+          </div>
         </section>
 
         <section id="install" class="doc-section reveal">
@@ -234,7 +304,7 @@ repoctx domain add payment src/billing/** PaymentService</code></pre>
       <p class="footer-copy" data-i18n="footer.copy">Open source under Apache-2.0 · 100% local · Zero telemetry</p>
       <div class="footer-links">
         <a href="index.html" data-i18n="nav.home">Home</a>
-        <a href="https://github.com" data-i18n="footer.github">GitHub</a>
+        <a href="https://github.com/GabrieleRuggieri/repo-ctx" data-i18n="footer.github">GitHub</a>
       </div>
     </div>
   </footer>

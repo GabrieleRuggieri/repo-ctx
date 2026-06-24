@@ -333,3 +333,45 @@
 
 - 60 test passano (`REPOCTX_HASH_EMBED=1`)
 - `cargo clippy --all-features` pulito
+
+---
+
+## 2026-06-25 — Sessione 18: visione Knowledge Layer v1.1 + docs + website
+
+### Completato
+
+- **ADR-0006**: modello a 3 layer (Deterministic Core → Grounded Repo Wiki → Context Assembly)
+- **ARCHITECTURE.md v1.1**: §3.5 wiki, §3.6 context assembly, decisioni #17–#18
+- **README.md**: visione aggiornata — codice in contesto, wiki verificata, confronto RAG vs LLM Wiki vs RepoCtx
+- **BACKLOG.md**: epic P1-8 … P1-13 (Knowledge Layer) + P2-5/P2-6
+- **Website** (`website/`): index + docs + i18n EN/IT — sezione tre layer, tabella comparativa, CLI wiki/context aggiornati
+- **CODEMAP.md**: roadmap esecuzione wiki + context assembly (planned)
+
+### Decisioni architetturali (migliorative vs LLM Wiki pura)
+
+- Wiki **ancorata al grafo** (`symbol_ids`, `graph_fingerprint`) — l'LLM scrive prosa, non struttura
+- **Lint deterministico** contro il grafo live — staleness first-class
+- **Context Assembly** con snippet reali sliced da disco, packing greedy a budget token
+- Authoring wiki **lazy via MCP sampling** (ADR-0003 invariato)
+- Wiki-only esplicitamente **fuori scope**
+
+### Prossimo step implementativo
+
+- P1-R1 … P1-R3 (release v0.1 + docs adozione) → P1-11 + P1-11b (context bundle markdown) → P1-8 … P1-10 (wiki)
+
+---
+
+## 2026-06-25 — Sessione 19: docs adozione-first (shipped vs v0.2)
+
+### Completato
+
+- **README**: sezioni "Use today (v0.1)" e "Coming v0.2", quick start 3 passi, config MCP Cursor, onestà su `context` metadata-only oggi
+- **ADR-0006** ampliato: north star bundle unico, template slots, claim blocks, watch sync, task modes, criteri adozione
+- **ARCHITECTURE**: §3.5–§3.6 aggiornati, API con `--format md` / `--task`, decisione #19 adoption-first, tabella MCP con status
+- **BACKLOG**: epic P1-R (ship & adozione v0.1), priorità P1-11b markdown bundle
+- **Website**: sezione "Use Today", badge shipped/v0.2, tabella comparativa onesta, terminal demo v0.1, docs adoption + MCP config
+- **CONTRIBUTING**: workflow adozione per contributor
+
+### Principio
+
+Documentazione allineata a **cosa funziona oggi** (impact, flow, MCP) e **north star v0.2** (un markdown bundle per task) — per massimizzare uso reale, non solo visione.

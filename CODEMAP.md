@@ -9,7 +9,7 @@
 | Binario | Crate | Ruolo |
 |---|---|---|
 | `repoctx` | `repoctx-cli` | CLI developer-facing |
-| `repoctx-mcp` | `repoctx-mcp` | MCP stdio via rmcp (`get_context`, `get_impact`, `get_flow`, `get_dependencies`) |
+| `repoctx-mcp` | `repoctx-mcp` | MCP stdio via rmcp (`get_context`, `get_impact`, `get_flow`, `get_dependencies`, `get_wiki` planned) |
 
 ---
 
@@ -73,6 +73,41 @@ repoctx-cli::commands::execute
        └─ downstream_symbols (recursive CTE)
 ```
 
+## Adoption path (v0.1 → v0.2)
+
+| Today (v0.1) | v0.2 (planned) |
+|---|---|
+| `QueryEngine::context` — metadata JSON | `ContextAssembler::assemble` — markdown bundle + snippets |
+| MCP `get_impact`, `get_flow`, `get_dependencies` | MCP `get_wiki`, full `get_context` bundle |
+| `build --watch` incremental | watch → wiki stale queue |
+
+North star: `repoctx context X --format md --task fix` → one file for the agent (ADR-0006).
+
+---
+
+### `repoctx context` (v0.2 — Context Assembly; metadata today)
+
+```
+repoctx-cli::context
+  └─ repoctx-query::ContextAssembler::assemble(symbol, budget)
+       ├─ resolve symbol → graph node
+       ├─ neighborhood (callers/callees BFS) + impact set
+       ├─ rank by edge proximity + embedding similarity
+       ├─ slice source snippets from disk (path + line ranges)
+       ├─ attach grounded wiki page(s) from .repoctx/wiki/
+       └─ greedy pack to token budget → ContextBundle JSON
+```
+
+### `repoctx wiki` (planned — Knowledge Layer)
+
+```
+repoctx-cli::wiki {sync|lint|show}
+  ├─ sync → WikiCompiler::sync_area (MCP sampling, grounded subgraph prompt)
+  │         └─ write .repoctx/wiki/*.md + update graph_fingerprint
+  ├─ lint → WikiLinter::run (deterministic: stale, broken links, edge claims)
+  └─ show  → load page by symbol id or page name
+```
+
 ---
 
 ## MCP (`repoctx-mcp`)
@@ -81,7 +116,8 @@ repoctx-cli::commands::execute
 repoctx-mcp::main (tokio)
   └─ server::serve(stdio)
        └─ RepoCtxMcpServer (rmcp tool_router)
-            ├─ get_context  → QueryEngine::context
+            ├─ get_context  → ContextAssembler::assemble (planned) / QueryEngine::context (today)
+            ├─ get_wiki     → WikiStore::load_page (planned)
             ├─ get_impact   → QueryEngine::impact
             ├─ get_flow     → QueryEngine::flow
             └─ get_dependencies → QueryEngine::dependencies
@@ -118,6 +154,9 @@ flowchart BT
     dependencies.json
     flows.json
     entrypoints.json
+    wiki/             # (planned) grounded knowledge pages
+      index.md
+      *.md
 
 <workspace-root>/
   repoctx.workspace.toml

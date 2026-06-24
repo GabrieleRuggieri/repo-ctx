@@ -41,8 +41,8 @@ REPOCTX_HASH_EMBED=1 cargo test --all
 
 | Crate | Role |
 |---|---|
-| `repoctx-cli` | CLI (`repoctx build`, `workspace build`, queries) |
-| `repoctx-core` | Build pipeline, parsing, graph, workspace linker |
+| `repoctx-cli` | CLI (`repoctx build`, `workspace build`, `wiki`, queries) |
+| `repoctx-core` | Build pipeline, parsing, graph, workspace linker, wiki compiler (planned) |
 | `repoctx-store` | SQLite index + JSON artifacts |
 | `repoctx-query` | Shared query engine for CLI and MCP |
 | `repoctx-schema` | Versioned artifact types + JSON Schema |
@@ -50,6 +50,17 @@ REPOCTX_HASH_EMBED=1 cargo test --all
 | `repoctx-mcp` | MCP stdio server |
 
 See [CODEMAP.md](./CODEMAP.md) and [ARCHITECTURE.md](./ARCHITECTURE.md) for execution flow and design decisions.
+
+**Product direction (v1.1):** RepoCtx combines a deterministic code graph with a **graph-grounded knowledge wiki** and **context assembly** that returns real code snippets for agents. See [ADR-0006](./docs/adr/0006-grounded-knowledge-wiki.md). Open implementation tasks are in [BACKLOG.md](./BACKLOG.md) (P1-8 … P1-15).
+
+## Adoption workflow (for contributors testing the tool)
+
+1. `cargo install repoctx-cli repoctx-mcp --locked` (or build from source)
+2. `repoctx build` in a fixture repo or this monorepo
+3. `repoctx impact <Symbol>` and `repoctx flow <domain>` — verify output
+4. Wire `repoctx-mcp` in Cursor (see README MCP config) and confirm `get_impact` works
+
+North star for v0.2: `repoctx context X --format md --task fix` → one markdown bundle per agent call.
 
 ## Adding a language (tree-sitter plugin)
 

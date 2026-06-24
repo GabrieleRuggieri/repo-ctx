@@ -596,6 +596,96 @@ code, pre { font-family: "JetBrains Mono", monospace; }
   flex-wrap: wrap;
 }
 
+/* ===== Layers Grid ===== */
+.layers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.layer-card {
+  padding: 2rem;
+  position: relative;
+}
+
+.layer-num {
+  font-size: 2rem;
+  font-weight: 800;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+.layer-card h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.layer-q {
+  font-size: 0.85rem;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+  font-style: italic;
+}
+
+.layer-card p:last-child {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.compare-wrap { margin-top: 1rem; }
+
+.compare-note {
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.compare-table th,
+.compare-table td {
+  padding: 0.75rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.compare-table th:first-child,
+.compare-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+}
+
+.compare-table th:last-child {
+  color: var(--accent);
+}
+
+.docs-check {
+  margin-top: 1rem;
+  list-style: none;
+}
+
+.docs-check li {
+  padding: 0.5rem 0 0.5rem 1.5rem;
+  position: relative;
+  color: var(--text-muted);
+}
+
+.docs-check li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
 /* ===== Features Grid ===== */
 .features-grid {
   display: grid;
@@ -1034,4 +1124,56 @@ td { color: var(--text-muted); }
   .hero-cta .btn { width: 100%; }
   .hero-stats { flex-direction: column; }
   .stat { width: 100%; }
+}
+
+/* Status badges (shipped vs planned) */
+.status-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.75rem;
+}
+
+.status-badge.shipped {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-badge.planned {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.use-today-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.use-today-v2 {
+  padding: 1.5rem 1.75rem;
+  text-align: center;
+}
+
+.use-today-v2 h3 {
+  margin: 0.5rem 0 0.5rem;
+}
+
+.adoption-steps {
+  margin: 1rem 0 1.5rem 1.25rem;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+
+@media (max-width: 768px) {
+  .use-today-grid {
+    grid-template-columns: 1fr;
+  }
 }

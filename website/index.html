@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="RepoCtx — AI Context & Impact Engine for Codebases" />
+  <meta name="description" content="RepoCtx — verified code graph + grounded knowledge wiki + context assembly for AI coding agents" />
   <title>RepoCtx — AI Context & Impact Engine</title>
   <link rel="icon" type="image/svg+xml" href="public/favicon.svg" />
   <link rel="preload" href="css/styles.css" as="style" />
@@ -29,6 +29,7 @@
       <nav class="nav-links">
         <a href="#problem" data-i18n="nav.problem">Problem</a>
         <a href="#solution" data-i18n="nav.solution">Solution</a>
+        <a href="#layers" data-i18n="nav.layers">Layers</a>
         <a href="#features" data-i18n="nav.features">Features</a>
         <a href="#integrations" data-i18n="nav.integrations">Integrations</a>
         <a href="docs.html" data-i18n="nav.docs">Docs</a>
@@ -74,8 +75,8 @@
             <span class="stat-label" data-i18n="hero.stat2">Telemetry</span>
           </div>
           <div class="stat glass-card">
-            <span class="stat-num">MCP</span>
-            <span class="stat-label" data-i18n="hero.stat3">Agent Ready</span>
+            <span class="stat-num">3</span>
+            <span class="stat-label" data-i18n="hero.stat3">Knowledge Layers</span>
           </div>
         </div>
       </div>
@@ -134,32 +135,110 @@
       <div class="split reveal">
         <div class="split-content">
           <span class="section-tag" data-i18n="solution.tag">The Solution</span>
-          <h2 data-i18n="solution.title">Precomputed understanding, not raw files</h2>
+          <h2 data-i18n="solution.title">Verified structure, compounding knowledge, real code</h2>
           <blockquote class="quote glass-card">
-            <p data-i18n="solution.quote">"Here is a structured, precomputed understanding of the repository"</p>
+            <p data-i18n="solution.quote">"The right code, the right understanding, and what breaks if you change it — within your token budget."</p>
           </blockquote>
-          <p data-i18n="solution.desc">RepoCtx builds a persistent local intelligence layer — architecture, flows, dependencies, symbols, and impact maps — queryable by humans and AI agents alike.</p>
+          <p data-i18n="solution.desc">RepoCtx combines a deterministic code graph (ground truth), a graph-grounded knowledge wiki (intent & gotchas), and context assembly that returns actual source snippets — not metadata alone.</p>
           <ul class="check-list">
-            <li data-i18n="solution.li1">Reduces token usage & hallucinations</li>
-            <li data-i18n="solution.li2">Increases accuracy & consistency</li>
-            <li data-i18n="solution.li3">Eliminates context rebuilding cost</li>
+            <li data-i18n="solution.li1">Graph verifies the wiki — no silent drift</li>
+            <li data-i18n="solution.li2">Persistent memory that compounds across sessions</li>
+            <li data-i18n="solution.li3">Code snippets + impact packed to your budget</li>
           </ul>
         </div>
         <div class="split-visual">
           <div class="flow-diagram glass-card">
             <div class="flow-node" data-i18n="solution.flow1">Source Code</div>
             <div class="flow-arrow">↓</div>
-            <div class="flow-node accent" data-i18n="solution.flow2">RepoCtx Engine</div>
+            <div class="flow-node accent" data-i18n="solution.flow2">Deterministic Core</div>
             <div class="flow-arrow">↓</div>
             <div class="flow-branches">
-              <div class="flow-node small" data-i18n="solution.flow3">Architecture</div>
-              <div class="flow-node small" data-i18n="solution.flow4">Flows</div>
-              <div class="flow-node small" data-i18n="solution.flow5">Impact</div>
-              <div class="flow-node small" data-i18n="solution.flow6">Context</div>
+              <div class="flow-node small" data-i18n="solution.flow3">Repo Wiki</div>
+              <div class="flow-node small" data-i18n="solution.flow4">Impact</div>
+              <div class="flow-node small" data-i18n="solution.flow5">Flows</div>
+              <div class="flow-node small" data-i18n="solution.flow6">Snippets</div>
             </div>
             <div class="flow-arrow">↓</div>
-            <div class="flow-node" data-i18n="solution.flow7">AI Agents & Devs</div>
+            <div class="flow-node" data-i18n="solution.flow7">Context Bundle → AI Agents</div>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Three Layers -->
+  <section class="section section-alt" id="layers">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-tag" data-i18n="layers.tag">Architecture</span>
+        <h2 data-i18n="layers.title">Three layers, one memory system</h2>
+        <p data-i18n="layers.sub">Better than a plain LLM Wiki: every page is anchored to verified symbols and lint-checked against the live graph.</p>
+      </div>
+      <div class="layers-grid">
+        <article class="layer-card glass-card reveal" data-delay="0">
+          <div class="layer-num">01</div>
+          <h3 data-i18n="layers.l1.title">Deterministic Core</h3>
+          <p class="layer-q" data-i18n="layers.l1.q">What is <em>true</em>?</p>
+          <p data-i18n="layers.l1.desc">Symbols, call graph, flows, entrypoints, impact — measured from source with tree-sitter. Byte-identical rebuilds. Zero LLM.</p>
+        </article>
+        <article class="layer-card glass-card reveal" data-delay="100">
+          <div class="layer-num">02</div>
+          <h3 data-i18n="layers.l2.title">Grounded Repo Wiki</h3>
+          <p class="layer-q" data-i18n="layers.l2.q">What does it <em>mean</em>?</p>
+          <p data-i18n="layers.l2.desc">Compounding markdown pages anchored to symbol IDs. Authored lazily via your agent's model. Stale pages are flagged automatically — the graph is ground truth.</p>
+        </article>
+        <article class="layer-card glass-card reveal" data-delay="200">
+          <div class="layer-num">03</div>
+          <h3 data-i18n="layers.l3.title">Context Assembly</h3>
+          <p class="layer-q" data-i18n="layers.l3.q">What code do I need <em>now</em>?</p>
+          <p data-i18n="layers.l3.desc">Real source snippets + wiki page + impact set, ranked and packed to your token budget. Code is never model-generated.</p>
+        </article>
+      </div>
+      <div class="compare-wrap reveal" data-delay="300">
+        <p class="compare-note muted" data-i18n="layers.cmp.note">Comparison at full v1.1 vision (graph + grounded wiki + context assembly).</p>
+        <div class="table-wrap glass-card">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th data-i18n="layers.cmp.rag">RAG</th>
+                <th data-i18n="layers.cmp.wiki">LLM Wiki</th>
+                <th data-i18n="layers.cmp.repoctx">RepoCtx</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td data-i18n="layers.cmp.r1">Compounding knowledge (wiki)</td>
+                <td>—</td>
+                <td>✓</td>
+                <td>✓</td>
+              </tr>
+              <tr>
+                <td data-i18n="layers.cmp.r2">Structure verified from code (AST/graph)</td>
+                <td>—</td>
+                <td>—</td>
+                <td>✓</td>
+              </tr>
+              <tr>
+                <td data-i18n="layers.cmp.r3">Source snippets in query response</td>
+                <td>✓</td>
+                <td>—</td>
+                <td>✓</td>
+              </tr>
+              <tr>
+                <td data-i18n="layers.cmp.r4">Wiki lint vs live code graph</td>
+                <td>—</td>
+                <td>—</td>
+                <td>✓</td>
+              </tr>
+              <tr>
+                <td data-i18n="layers.cmp.r5">Impact analysis (what breaks)</td>
+                <td>—</td>
+                <td>—</td>
+                <td>✓</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -175,23 +254,23 @@
       <div class="features-grid">
         <article class="feature glass-card reveal" data-delay="0">
           <div class="feature-num">01</div>
-          <h3 data-i18n="features.f1.title">Impact Analysis Engine</h3>
-          <p data-i18n="features.f1.desc">Determines exactly what breaks when a component changes — modules, tests, risk zones.</p>
+          <h3 data-i18n="features.f1.title">Deterministic Code Graph</h3>
+          <p data-i18n="features.f1.desc">Symbols, dependencies, calls, flows and entrypoints — measured from source, not guessed.</p>
         </article>
         <article class="feature glass-card reveal" data-delay="100">
           <div class="feature-num">02</div>
-          <h3 data-i18n="features.f2.title">Semantic Flow Reconstruction</h3>
-          <p data-i18n="features.f2.desc">Reconstructs end-to-end business flows across services, modules, and external systems.</p>
+          <h3 data-i18n="features.f2.title">Impact Analysis Engine</h3>
+          <p data-i18n="features.f2.desc">Know exactly what breaks when you change a component — modules, tests, risk zones.</p>
         </article>
         <article class="feature glass-card reveal" data-delay="200">
           <div class="feature-num">03</div>
-          <h3 data-i18n="features.f3.title">Repository Memory Layer</h3>
-          <p data-i18n="features.f3.desc">Persistent structural understanding that survives across sessions and agent runs.</p>
+          <h3 data-i18n="features.f3.title">Grounded Knowledge Wiki</h3>
+          <p data-i18n="features.f3.desc">Compounding markdown knowledge anchored to real symbols, with automatic staleness detection.</p>
         </article>
         <article class="feature glass-card reveal" data-delay="300">
           <div class="feature-num">04</div>
-          <h3 data-i18n="features.f4.title">AI Context Compression</h3>
-          <p data-i18n="features.f4.desc">Reduces massive codebases into minimal, token-optimized context for LLM consumption.</p>
+          <h3 data-i18n="features.f4.title">Context Assembly</h3>
+          <p data-i18n="features.f4.desc">Returns the right code snippets plus understanding and impact — packed within a token budget.</p>
         </article>
       </div>
     </div>
@@ -220,7 +299,7 @@
         </div>
         <div class="integration glass-card highlight">
           <h3>MCP Server</h3>
-          <p data-i18n="integrations.mcp">repoctx-mcp exposes get_context, get_impact, get_flow, get_dependencies over stdio.</p>
+          <p data-i18n="integrations.mcp">repoctx-mcp: get_context (code + wiki + impact), get_wiki, get_impact, get_flow, get_dependencies over stdio.</p>
         </div>
       </div>
     </div>
@@ -230,8 +309,8 @@
   <section class="section cta-section">
     <div class="container reveal">
       <div class="cta-box glass-card">
-        <h2 data-i18n="cta.title">The standard context layer for AI coding agents</h2>
-        <p data-i18n="cta.sub">Like Git for version control — RepoCtx for code understanding.</p>
+        <h2 data-i18n="cta.title">Verified, compounding memory for AI coding agents</h2>
+        <p data-i18n="cta.sub">Like Git for version control — RepoCtx for code understanding that includes the code.</p>
         <a href="docs.html#install" class="btn btn-primary btn-lg" data-i18n="cta.button">Start Building Context</a>
       </div>
     </div>
@@ -247,7 +326,7 @@
       <p class="footer-copy" data-i18n="footer.copy">Open source under Apache-2.0 · 100% local · Zero telemetry</p>
       <div class="footer-links">
         <a href="docs.html" data-i18n="footer.docs">Documentation</a>
-        <a href="https://github.com" data-i18n="footer.github">GitHub</a>
+        <a href="https://github.com/GabrieleRuggieri/repo-ctx" data-i18n="footer.github">GitHub</a>
       </div>
     </div>
   </footer>
