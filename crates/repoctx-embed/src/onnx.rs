@@ -1,36 +1,49 @@
-//! Optional ONNX runtime embeddings (BGE-small class) when a model file is present.
-
-use std::path::Path;
-
-use tracing::info;
+//! ONNX-backed embeddings with deterministic hash fallback.
 
 use crate::embedder::embed_text;
 
-/// Environment variable pointing to a local `.onnx` embedding model.
+#[cfg(feature = "onnx")]
+pub use crate::model::{
+    default_model_cache_dir, hash_embed_forced, preload_onnx_model, try_embed_onnx,
+    EMBED_CACHE_ENV, HASH_EMBED_ENV, ONNX_MODEL_ENV,
+};
+
+#[cfg(not(feature = "onnx"))]
 pub const ONNX_MODEL_ENV: &str = "REPOCTX_ONNX_MODEL";
 
-/// Embeds text with ONNX when configured, otherwise falls back to deterministic hashing.
+#[cfg(not(feature = "onnx"))]
+pub const HASH_EMBED_ENV: &str = "REPOCTX_HASH_EMBED";
+
+#[cfg(not(feature = "onnx"))]
+pub const EMBED_CACHE_ENV: &str = "REPOCTX_EMBED_CACHE";
+
+/// Embeds text with ONNX when available, otherwise falls back to deterministic hashing.
 pub fn embed_with_model(text: &str) -> Vec<f32> {
+    #[cfg(feature = "onnx")]
+    {
+        if let Some(vector) = try_embed_onnx(text) {
+            return vector;
+        }
+    }
+
+    #[cfg(not(feature = "onnx"))]
     if let Some(path) = std::env::var(ONNX_MODEL_ENV)
         .ok()
         .filter(|value| !value.is_empty())
     {
-        if let Some(vec) = try_embed_onnx(Path::new(&path), text) {
-            return vec;
-        }
+        tracing::info!(
+            path = %path,
+            "ONNX model path set but `onnx` feature disabled; using hash embedder"
+        );
     }
+
     embed_text(text)
 }
 
-/// Placeholder for ONNX inference — loads path check only until `ort` integration lands.
-pub fn try_embed_onnx(model_path: &Path, text: &str) -> Option<Vec<f32>> {
-    if !model_path.is_file() {
-        return None;
-    }
-    info!(
-        path = %model_path.display(),
-        "ONNX model path set; tokenizer integration pending, using hash embedder"
-    );
-    let _ = text;
-    None
+#[cfg(not(feature = "onnx"))]
+pub fn preload_onnx_model() {}
+
+#[cfg(not(feature = "onnx"))]
+pub fn hash_embed_forced() -> bool {
+    false
 }

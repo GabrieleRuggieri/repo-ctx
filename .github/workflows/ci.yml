@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  REPOCTX_HASH_EMBED: "1"
 
 jobs:
   rust:

@@ -261,3 +261,21 @@
 ### Verificato
 
 - `cargo test --all` e `cargo clippy` puliti
+
+---
+
+## 2026-06-23 — Sessione 14: ONNX BGE-small + tokenizer (branch `feature/onnx-bge-small`)
+
+### Completato
+
+- **`fastembed`**: modello `BAAI/bge-small-en-v1.5` via `ort` + tokenizer Hugging Face
+- **Download lazy**: cache in `~/.cache/repoctx/models` (override `REPOCTX_EMBED_CACHE`)
+- **Fallback hash**: `REPOCTX_HASH_EMBED=1` forza embedder deterministico (CI)
+- **`REPOCTX_ONNX_MODEL`**: supporto modello custom (directory o `.onnx` + tokenizer files)
+- **`preload_onnx_model()`** chiamato all'inizio della fase embeddings in build
+- Feature `onnx` (default) in `repoctx-embed`
+
+### Verificato
+
+- 49 test passano con `REPOCTX_HASH_EMBED=1` in CI
+- `cargo clippy --all-features` pulito

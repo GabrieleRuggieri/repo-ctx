@@ -1,6 +1,6 @@
 //! Embedding generation during `repoctx build`.
 
-use repoctx_embed::{embed_with_model, symbol_embedding_text};
+use repoctx_embed::{embed_with_model, preload_onnx_model, symbol_embedding_text};
 use repoctx_schema::artifacts::SymbolRecord;
 use repoctx_store::IndexStore;
 use tracing::info;
@@ -12,6 +12,8 @@ pub fn index_symbol_embeddings(
     store: &IndexStore,
     symbols: &[SymbolRecord],
 ) -> Result<usize, CoreError> {
+    preload_onnx_model();
+
     let mut count = 0usize;
     for symbol in symbols {
         let text = symbol_embedding_text(symbol);

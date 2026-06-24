@@ -42,7 +42,7 @@ fn accumulate_token(vec: &mut [f32], token: &str, weight: f32) {
     vec[idx2] += weight * 0.5;
 }
 
-fn l2_normalize(vec: &mut [f32]) {
+pub(crate) fn l2_normalize(vec: &mut [f32]) {
     let norm: f32 = vec.iter().map(|v| v * v).sum::<f32>().sqrt();
     if norm > f32::EPSILON {
         for v in vec.iter_mut() {
