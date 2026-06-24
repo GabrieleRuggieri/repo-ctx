@@ -126,10 +126,28 @@
 
 ---
 
-## 2026-06-23 — Hook pre-commit rustfmt (branch `chore/git-pre-commit-hook`)
+## 2026-06-23 — Sessione 6: hook pre-commit rustfmt (branch `chore/git-pre-commit-hook`)
 
 ### Completato
 
 - **`.githooks/pre-commit`**: `cargo fmt --all` su file `.rs` in stage, re-stage automatico
 - **`scripts/setup-git-hooks.sh`**: `git config core.hooksPath .githooks`
 - README: sezione setup hook
+
+---
+
+## 2026-06-23 — Sessione 7: domain CLI (branch `feature/domain-cli`)
+
+### Completato
+
+- **`repoctx domain rename`**: rinomina flow per id/nome, persiste in `domains` + `flows`
+- **`repoctx domain add`**: allega path (`src/foo/**`) o simboli, ricostruisce il flow
+- **Tabella `domain_members`** + override al rebuild (`apply_domain_overrides`)
+- **`clear_all`** non cancella più i domini utente
+- Integration test: rename sopravvive a rebuild, domain add con path/symboli
+- Fixture test isolate in tempdir (no race su `.repoctx/`)
+
+### Verificato
+
+- 27 test totali passano
+- `cargo clippy` pulito
