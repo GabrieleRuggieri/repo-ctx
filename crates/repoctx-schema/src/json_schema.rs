@@ -5,8 +5,7 @@ use serde::de::DeserializeOwned;
 use serde_json::Value;
 
 use crate::artifacts::{
-    ArchitectureArtifact, DependenciesArtifact, EntrypointsArtifact, FlowsArtifact,
-    SymbolsArtifact,
+    ArchitectureArtifact, DependenciesArtifact, EntrypointsArtifact, FlowsArtifact, SymbolsArtifact,
 };
 use crate::error::SchemaError;
 
@@ -43,10 +42,11 @@ pub fn validate_artifact_json(artifact: &str, json: &str) -> Result<(), SchemaEr
             source,
         })?;
 
-    let validator = jsonschema::validator_for(&schema).map_err(|error| SchemaError::InvalidSchema {
-        artifact: artifact.to_string(),
-        message: error.to_string(),
-    })?;
+    let validator =
+        jsonschema::validator_for(&schema).map_err(|error| SchemaError::InvalidSchema {
+            artifact: artifact.to_string(),
+            message: error.to_string(),
+        })?;
 
     if let Err(error) = validator.validate(&instance) {
         return Err(SchemaError::ValidationFailed {

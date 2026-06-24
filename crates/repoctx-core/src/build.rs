@@ -237,7 +237,9 @@ impl BuildPipeline {
     }
 }
 
-fn collect_imports(parse_cache: &HashMap<String, FileParseResult>) -> Vec<crate::parse::ParsedImport> {
+fn collect_imports(
+    parse_cache: &HashMap<String, FileParseResult>,
+) -> Vec<crate::parse::ParsedImport> {
     parse_cache
         .values()
         .flat_map(|parsed| parsed.imports.iter().cloned())

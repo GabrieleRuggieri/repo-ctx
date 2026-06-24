@@ -13,8 +13,7 @@ fn schemas_dir() -> PathBuf {
 fn committed_schemas_match_generated() {
     for name in ARTIFACT_NAMES {
         let path = schemas_dir().join(format!("{name}.schema.json"));
-        let committed = fs::read_to_string(&path)
-            .unwrap_or_else(|e| panic!("read {path:?}: {e}"));
+        let committed = fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path:?}: {e}"));
         let generated = pretty_schema_for(name).expect("generate schema");
         assert_eq!(
             committed.trim(),
@@ -39,18 +38,9 @@ fn write_schemas() {
 #[test]
 fn minimal_artifacts_validate() {
     let samples = [
-        (
-            "symbols",
-            r#"{"schemaVersion":"1.0.0","symbols":[]}"#,
-        ),
-        (
-            "dependencies",
-            r#"{"schemaVersion":"1.0.0","edges":[]}"#,
-        ),
-        (
-            "flows",
-            r#"{"schemaVersion":"1.0.0","flows":[]}"#,
-        ),
+        ("symbols", r#"{"schemaVersion":"1.0.0","symbols":[]}"#),
+        ("dependencies", r#"{"schemaVersion":"1.0.0","edges":[]}"#),
+        ("flows", r#"{"schemaVersion":"1.0.0","flows":[]}"#),
         (
             "entrypoints",
             r#"{"schemaVersion":"1.0.0","entrypoints":[]}"#,

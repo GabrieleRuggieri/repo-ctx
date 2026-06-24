@@ -23,8 +23,7 @@ impl<'a> SymbolIndex<'a> {
     pub fn new(symbols: &'a [SymbolRecord]) -> Self {
         let mut by_id = HashMap::with_capacity(symbols.len());
         let mut by_file_and_name = HashMap::new();
-        let mut by_dir_and_name: HashMap<(String, &'a str), Vec<&'a SymbolRecord>> =
-            HashMap::new();
+        let mut by_dir_and_name: HashMap<(String, &'a str), Vec<&'a SymbolRecord>> = HashMap::new();
         let mut by_name: HashMap<&'a str, Vec<&'a SymbolRecord>> = HashMap::new();
 
         for symbol in symbols {
@@ -53,7 +52,11 @@ impl<'a> SymbolIndex<'a> {
     }
 
     /// Resolves a callee from a call site using scoped lookup (file → directory → unique global).
-    pub fn resolve_call(&self, caller: &SymbolRecord, callee_name: &str) -> Option<&'a SymbolRecord> {
+    pub fn resolve_call(
+        &self,
+        caller: &SymbolRecord,
+        callee_name: &str,
+    ) -> Option<&'a SymbolRecord> {
         if let Some(symbol) = self
             .by_file_and_name
             .get(&(caller.file_path.as_str(), callee_name))
@@ -75,7 +78,11 @@ impl<'a> SymbolIndex<'a> {
     }
 
     /// Resolves an imported name to a symbol (same rules as calls).
-    pub fn resolve_import(&self, importer: &SymbolRecord, imported_name: &str) -> Option<&'a SymbolRecord> {
+    pub fn resolve_import(
+        &self,
+        importer: &SymbolRecord,
+        imported_name: &str,
+    ) -> Option<&'a SymbolRecord> {
         self.resolve_call(importer, imported_name)
     }
 }

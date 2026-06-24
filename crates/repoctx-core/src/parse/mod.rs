@@ -2,4 +2,6 @@
 
 mod tree_sitter;
 
-pub use tree_sitter::{FileParseResult, ParsedCall, ParsedEntrypoint, ParsedImport, TreeSitterParser};
+pub use tree_sitter::{
+    FileParseResult, ParsedCall, ParsedEntrypoint, ParsedImport, TreeSitterParser,
+};

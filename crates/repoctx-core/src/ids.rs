@@ -53,9 +53,6 @@ mod tests {
         let a = stable_symbol_id("src/main.rs", "main", 1, "function");
         let b = stable_symbol_id("src/main.rs", "main", 1, "function");
         assert_eq!(a, b);
-        assert_ne!(
-            a,
-            stable_symbol_id("src/main.rs", "main", 2, "function")
-        );
+        assert_ne!(a, stable_symbol_id("src/main.rs", "main", 2, "function"));
     }
 }

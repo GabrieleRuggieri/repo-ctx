@@ -47,7 +47,12 @@ fn validate_artifacts(root: &Path) {
 
 #[test]
 fn build_outputs_validate_against_json_schema() {
-    for fixture in ["monorepo-edges", "tiny-rust", "tiny-python", "flows-payment"] {
+    for fixture in [
+        "monorepo-edges",
+        "tiny-rust",
+        "tiny-python",
+        "flows-payment",
+    ] {
         let root = fixture_path(fixture);
         BuildPipeline::new(
             &root,
@@ -80,7 +85,10 @@ fn rebuild_produces_byte_identical_artifacts() {
         .expect("second build");
     let second = read_artifacts(&root);
 
-    assert_eq!(first, second, "artifacts must be deterministic across rebuilds");
+    assert_eq!(
+        first, second,
+        "artifacts must be deterministic across rebuilds"
+    );
 }
 
 #[test]
