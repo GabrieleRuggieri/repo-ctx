@@ -284,6 +284,45 @@ The tool is successful if:
 
 ---
 
+## Development
+
+### Prerequisites
+
+- Rust 1.75+ (`rustup`)
+
+### Build from source
+
+```bash
+git clone <repo-url>
+cd repoctx
+cargo build --release
+./target/release/repoctx build
+```
+
+### Run tests & lint
+
+```bash
+cargo test --all
+cargo fmt --all -- --check
+cargo clippy --all-targets -- -D warnings
+```
+
+### Documentation map
+
+| Document | Purpose |
+|---|---|
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Stack, data model, API contracts (source of truth) |
+| [CODEMAP.md](./CODEMAP.md) | Execution flow and crate graph |
+| [PROGRESS.md](./PROGRESS.md) | Development log / completed milestones |
+| [BACKLOG.md](./BACKLOG.md) | Open work prioritized P0–P2 |
+| [RULES.md](./RULES.md) | Git, commit, testing, and code quality conventions |
+
+### License
+
+Apache-2.0 — see [LICENSE](./LICENSE).
+
+---
+
 ## Conclusion
 
 RepoCtx is not just another developer tool.

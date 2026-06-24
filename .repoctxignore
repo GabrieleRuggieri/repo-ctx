@@ -1,0 +1,7 @@
+# Secrets and local caches — never analyze these paths
+.env
+.env.*
+models/
+target/
+node_modules/
+.netlify/

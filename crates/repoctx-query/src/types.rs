@@ -1,0 +1,54 @@
+//! Structured query response types (CLI `--json` and MCP output).
+
+use repoctx_schema::artifacts::{FlowRecord, SymbolRecord};
+use serde::Serialize;
+
+/// Impact analysis result for a symbol.
+#[derive(Debug, Clone, Serialize)]
+pub struct ImpactResult {
+    /// Resolved root symbol.
+    pub symbol: SymbolRecord,
+    /// Downstream symbol ids within the requested depth.
+    pub affected_symbol_ids: Vec<String>,
+    /// Human-readable module paths at risk.
+    pub affected_modules: Vec<String>,
+    /// Related test file paths (heuristic: `*test*` in path).
+    pub related_tests: Vec<String>,
+    /// Symbols with many downstream dependents.
+    pub risk_zones: Vec<String>,
+}
+
+/// Flow lookup result for a domain name.
+#[derive(Debug, Clone, Serialize)]
+pub struct FlowResult {
+    /// Matched flow record, if any.
+    pub flow: Option<FlowRecord>,
+    /// Suggested domain names when no exact match exists.
+    pub suggestions: Vec<String>,
+}
+
+/// LLM-oriented context bundle for a symbol.
+#[derive(Debug, Clone, Serialize)]
+pub struct ContextResult {
+    /// Resolved symbol.
+    pub symbol: SymbolRecord,
+    /// Deterministic responsibility summary.
+    pub responsibility: String,
+    /// Related symbol names in the same file or module.
+    pub related_components: Vec<String>,
+    /// External dependency hints (from file path segments).
+    pub external_dependencies: Vec<String>,
+    /// Static invariants inferred from visibility and kind.
+    pub invariants: Vec<String>,
+}
+
+/// Direct and transitive dependency listing.
+#[derive(Debug, Clone, Serialize)]
+pub struct DependenciesResult {
+    /// Resolved root symbol.
+    pub symbol: SymbolRecord,
+    /// Downstream symbol ids.
+    pub downstream: Vec<String>,
+    /// Upstream symbol ids (not yet populated in v0).
+    pub upstream: Vec<String>,
+}
