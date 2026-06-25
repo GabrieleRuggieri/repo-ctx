@@ -2,6 +2,12 @@
 
 All notable changes to Becket are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+
+- Distribution: npm only for package-manager publish (Homebrew tap removed); shell installer and GitHub Releases unchanged
+
 ## [0.2.1] - 2025-06-25
 
 ### Fixed

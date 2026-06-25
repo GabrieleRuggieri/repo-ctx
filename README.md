@@ -379,17 +379,11 @@ cargo build --release
 
 ### Install (prebuilt)
 
-**Homebrew** (after tap is published):
-
-```bash
-brew tap GabrieleRuggieri/becket
-brew install becket
-```
-
-**npm** (downloads native binary from GitHub Releases):
+**npm** (downloads native binary from GitHub Releases — macOS, Linux, Windows):
 
 ```bash
 npx becket build
+# or: npm install -g becket becket-mcp
 ```
 
 **Cargo** (builds from source):

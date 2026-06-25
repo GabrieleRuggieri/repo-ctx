@@ -160,7 +160,7 @@ git tag v0.2.0 && git push --tags
 
 CI in `.github/workflows/ci.yml` runs tier-1 checks on Ubuntu and macOS; Windows is tier-2 (see [docs/windows.md](./docs/windows.md)).
 
-CI in `.github/workflows/release.yml` builds binaries and publishes npm/Homebrew artifacts.
+CI in `.github/workflows/release.yml` builds binaries and publishes npm packages.
 
 ## Architecture decisions
 

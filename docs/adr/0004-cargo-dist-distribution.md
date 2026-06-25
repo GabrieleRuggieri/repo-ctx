@@ -12,13 +12,13 @@ Becket deve raggiungere sviluppatori Rust, macOS/Linux nativi e ecosistema JS (`
 Usare **[cargo-dist](https://axodotdev.github.io/cargo-dist/)** (`dist-workspace.toml`) per:
 
 - Build cross-platform su tag `v*.*.*` → GitHub Releases
-- Installer shell, **npm** (`becket`, `becket-mcp`) e **Homebrew** (tap `GabrieleRuggieri/homebrew-becket`)
+- Installer shell e **npm** (`becket`, `becket-mcp`) — canale prebuilt principale, cross-platform
 - CI generata in `.github/workflows/release.yml`
 
 Canali complementari: `cargo install becket-cli` e build da sorgente.
 
 ## Conseguenze
 
-- Il tap Homebrew va creato come repo separato prima del primo publish automatico.
-- `dist init` va rieseguito quando si aggiorna cargo-dist.
 - Release = bump versione workspace + tag `v0.x.y` + push.
+- Per npm serve il secret `NPM_TOKEN` nel repo GitHub.
+- Homebrew rimosso (2026-06): npm copre macOS/Linux/Windows senza tap separato.

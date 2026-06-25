@@ -6,9 +6,8 @@ Becket ships via **cargo-dist** (see `dist-workspace.toml` and [ADR-0004](../doc
 
 | Channel | Artifact | Notes |
 |---------|----------|-------|
+| npm | `becket`, `becket-mcp` | `npx becket build` — binary downloaded at install (all platforms) |
 | GitHub Releases | `.tar.xz` / `.zip` per target | Triggered by git tag `v*.*.*` |
-| Homebrew | Formula in tap repo | `brew install GabrieleRuggieri/becket/becket` |
-| npm | `becket`, `becket-mcp` | `npx becket build` — binary downloaded at install |
 | Cargo | `becket-cli`, `becket-mcp` crates | `cargo install becket-cli --locked` |
 
 ## ONNX embeddings (optional, from source)
@@ -31,21 +30,8 @@ git tag v0.2.0
 git push && git push --tags
 ```
 
-4. GitHub Actions `Release` workflow builds artifacts and publishes to GitHub Releases (+ Homebrew tap + npm when configured).
+4. GitHub Actions `Release` workflow builds artifacts and publishes to GitHub Releases (+ npm when `NPM_TOKEN` is configured).
 5. Optional: `cargo publish -p becket-cli` and `cargo publish -p becket-mcp`.
-
-## Homebrew tap setup (one-time)
-
-Create an empty GitHub repository:
-
-`https://github.com/GabrieleRuggieri/homebrew-becket`
-
-cargo-dist publishes generated `becket.rb` formulas there on each stable release. Users install with:
-
-```bash
-brew tap GabrieleRuggieri/becket
-brew install becket
-```
 
 ## npm packages
 
