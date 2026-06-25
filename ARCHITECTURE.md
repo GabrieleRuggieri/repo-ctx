@@ -155,7 +155,7 @@ distribution, while still integrating cleanly with the AI ecosystem.
 | **Embeddings** | **Bundled local ONNX model** via `ort` (+ `fastembed-rs`), small (e.g. BGE-small, ~100 MB) | The *only* model Becket ships. Runs in-process, offline, deterministic — **not** a server/daemon and **not** Ollama. Downloaded once on first build, then cached. License verified Apache-2.0/MIT. |
 | **LLM text enrichment** | **Exclusively host-delegated via MCP sampling** (Cursor / Claude Code / Codex model) | No bundled LLM, **no Ollama, no remote provider, no API keys**. If no MCP host is present, text enrichment is simply skipped — deterministic output is unaffected. |
 | **Artifact schemas** | **JSON Schema** + generated types, explicit `schemaVersion` | Output is a versioned public contract; schemas are testable and self-documenting. |
-| **Distribution** | **Native signed binaries** via `cargo-dist` (GitHub Releases) + **Homebrew tap** + `cargo install` + a **thin npm wrapper** that fetches the right binary | Best reach: `brew`/`cargo` for native users, `npx becket` for JS devs — same pattern as ripgrep, ast-grep, biome, swc. |
+| **Distribution** | **Native signed binaries** via `cargo-dist` (GitHub Releases) + a **thin npm wrapper** (`npx becket`) that fetches the right binary | Primary install path for users; shell installer on Releases as fallback. Contributors build from a clone. |
 
 > **Graph storage note:** we start with SQLite + recursive CTEs (simplest, fully embedded). If traversal
 > depth/latency on enormous monorepos becomes a bottleneck, an embedded graph engine
@@ -573,11 +573,11 @@ flowchart LR
     CI --> TAG{"Release tag?"}
     TAG -- yes --> REL["cargo-dist:\ncross-compile native binaries\n(macOS/Linux/Windows, x64+arm64)"]
     REL --> SIGN["Sign + SLSA provenance"]
-    SIGN --> PUB["Publish:\nGitHub Releases · Homebrew tap\ncargo · npm wrapper pkg"]
+    SIGN --> PUB["Publish:\nGitHub Releases · npm wrapper pkg"]
 ```
 
 - **CI/CD**: GitHub Actions, matrix over macOS/Linux/Windows (x64 + arm64). Gates: `cargo fmt`, `clippy`, tests, **JSON Schema validation**, and **determinism tests** (same fixture → byte-identical artifacts). Performance benchmarks guard against latency regressions on large-repo fixtures.
-- **Distribution** (best reach for an OSS standard): signed **native binaries** via `cargo-dist` on GitHub Releases, a **Homebrew tap**, `cargo install becket`, and a **thin npm wrapper** (`npx becket`) that downloads the matching prebuilt binary — the same model used by ripgrep, ast-grep, biome and swc.
+- **Distribution**: signed **native binaries** via `cargo-dist` on GitHub Releases and a **thin npm wrapper** (`npx becket`) that downloads the matching prebuilt binary. Contributors build from a clone; no crates.io publish.
 - **Versioning**: release-please / conventional commits; the artifact `schemaVersion` is versioned **independently** from the CLI version.
 - **No cloud to operate.** There is **no team-sync, no backend, zero telemetry, and no outbound LLM traffic from Becket** — any LLM call is executed by the host agent via MCP sampling, not by Becket.
 
@@ -639,7 +639,7 @@ Every decision below is settled; there are **no open questions** blocking develo
 | 11 | Telemetry | **Zero. None. Ever.** |
 | 12 | Cloud / team | **None** — strictly local. |
 | 13 | License | **Apache-2.0**; dependencies & embedding model kept license-compatible. |
-| 14 | Distribution | **Homebrew** + **npm wrapper** (`npx becket`) as the two primary channels; also signed GitHub Release binaries (`cargo-dist`) and `cargo install`. |
+| 14 | Distribution | **npm wrapper** (`npx becket`) as primary channel; signed GitHub Release binaries (`cargo-dist`) and shell installer as fallback. No crates.io. |
 | 15 | Platforms | **macOS & Linux tier-1** (x64 + arm64, fully CI-tested); **Windows tier-2** (supported & CI-built, issues triaged after tier-1). |
 | 16 | Artifact schema | JSON Schema with `schemaVersion`, SemVer'd independently from the CLI. |
 | 17 | Knowledge model | **Three layers**: Deterministic Core (ground truth) → grounded **Repo Wiki** (markdown, MCP-authored, lazy) → **Context Assembly** (code + wiki + impact, budgeted). The graph **grounds and lints** the wiki. **Wiki-only is out of scope.** |

@@ -43,13 +43,9 @@ These work **now**. No bundled LLM — optional prose enrichment uses your MCP h
 ### Quick start (3 steps)
 
 ```bash
-# 1. Install (pick one)
-cargo install becket-cli becket-mcp --locked
-# or from this repo before a release is available:
-./scripts/becket-local.sh build
-# optional ONNX embeddings when building from source:
-# cargo install --path crates/becket-cli --features onnx --locked
-# or: npx becket build   (downloads binary after release)
+# 1. Install (downloads prebuilt binary from GitHub Releases)
+npx becket build
+# or global: npm install -g becket becket-mcp
 
 # 2. Index your repo
 cd your-project && becket build
@@ -368,13 +364,14 @@ The tool is successful if:
 
 - Rust 1.75+ (`rustup`)
 
-### Build from source
+### Build from source (contributors)
 
 ```bash
 git clone https://github.com/GabrieleRuggieri/becket.git
 cd becket
 cargo build --release
 ./target/release/becket build
+# or: ./scripts/becket-local.sh build
 ```
 
 ### Install (prebuilt)
@@ -384,13 +381,6 @@ cargo build --release
 ```bash
 npx becket build
 # or: npm install -g becket becket-mcp
-```
-
-**Cargo** (builds from source):
-
-```bash
-cargo install becket-cli --locked
-cargo install becket-mcp --locked
 ```
 
 **GitHub Releases**: download the archive for your platform from [Releases](https://github.com/GabrieleRuggieri/becket/releases), or use the shell installer attached to each release.

@@ -7,6 +7,7 @@ All notable changes to Becket are documented here. The format follows [Keep a Ch
 ### Changed
 
 - Distribution: npm only for package-manager publish (Homebrew tap removed); shell installer and GitHub Releases unchanged
+- Docs: removed `cargo install` / crates.io as an install channel; contributors build from a clone
 
 ## [0.2.1] - 2025-06-25
 

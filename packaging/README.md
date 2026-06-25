@@ -8,14 +8,13 @@ Becket ships via **cargo-dist** (see `dist-workspace.toml` and [ADR-0004](../doc
 |---------|----------|-------|
 | npm | `becket`, `becket-mcp` | `npx becket build` — binary downloaded at install (all platforms) |
 | GitHub Releases | `.tar.xz` / `.zip` per target | Triggered by git tag `v*.*.*` |
-| Cargo | `becket-cli`, `becket-mcp` crates | `cargo install becket-cli --locked` |
 
 ## ONNX embeddings (optional, from source)
 
-Release binaries use deterministic hash embeddings (fast, no model download). For ONNX semantic search when building from source:
+Release binaries use deterministic hash embeddings (fast, no model download). For ONNX semantic search when building from a clone:
 
 ```bash
-cargo install --path crates/becket-cli --features onnx --locked
+cargo build --release -p becket-cli --features onnx
 ```
 
 ## Cutting a release
@@ -31,7 +30,6 @@ git push && git push --tags
 ```
 
 4. GitHub Actions `Release` workflow builds artifacts and publishes to GitHub Releases (+ npm when `NPM_TOKEN` is configured).
-5. Optional: `cargo publish -p becket-cli` and `cargo publish -p becket-mcp`.
 
 ## npm packages
 

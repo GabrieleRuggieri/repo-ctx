@@ -378,14 +378,16 @@ body.nav-open {
   font-size: 1.1rem;
   color: var(--text-muted);
   max-width: 520px;
-  margin-bottom: 2rem;
+  margin-bottom: 0;
 }
 
-.hero-cta {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 2.5rem;
+.hero-install {
+  margin: 1.75rem 0 2.5rem;
+  max-width: 32rem;
+}
+
+.hero-install .code-block {
+  margin: 0;
 }
 
 .hero-stats {
@@ -1344,8 +1346,6 @@ td { color: var(--text-muted); }
 }
 
 @media (max-width: 500px) {
-  .hero-cta { flex-direction: column; }
-  .hero-cta .btn { width: 100%; }
   .hero-stats { flex-direction: column; }
   .stat { width: 100%; }
 }

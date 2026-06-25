@@ -6,8 +6,8 @@
   <meta name="description" content="Becket — verified code graph + grounded knowledge wiki + context assembly for AI coding agents" />
   <title>Becket — AI Context & Impact Engine</title>
   <link rel="icon" type="image/svg+xml" href="public/favicon.svg" />
-  <link rel="preload" href="css/styles.css?v=9" as="style" />
-  <link rel="stylesheet" href="css/styles.css?v=9" />
+  <link rel="preload" href="css/styles.css?v=11" as="style" />
+  <link rel="stylesheet" href="css/styles.css?v=11" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -64,9 +64,14 @@
         <p class="hero-sub" data-i18n="hero.sub">
           Becket transforms repositories into structured, queryable knowledge — giving AI agents and developers precise context, impact analysis, and architectural understanding.
         </p>
-        <div class="hero-cta">
-          <a href="docs.html#install" class="btn btn-primary btn-lg" data-i18n="hero.cta1">Install Becket</a>
-          <a href="docs.html" class="btn btn-glass btn-lg" data-i18n="hero.cta2">Read the Docs</a>
+        <div class="hero-install reveal" data-delay="100">
+          <div class="code-block glass-card">
+            <div class="code-header">
+              <span data-i18n="hero.install.terminal">terminal</span>
+              <button type="button" class="copy-btn" data-copy="npx becket build" data-i18n="hero.install.copy">Copy</button>
+            </div>
+            <pre><code>npx becket build</code></pre>
+          </div>
         </div>
         <div class="hero-stats">
           <div class="stat glass-card">

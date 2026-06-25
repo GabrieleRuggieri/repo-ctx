@@ -15,7 +15,7 @@ Usare **[cargo-dist](https://axodotdev.github.io/cargo-dist/)** (`dist-workspace
 - Installer shell e **npm** (`becket`, `becket-mcp`) — canale prebuilt principale, cross-platform
 - CI generata in `.github/workflows/release.yml`
 
-Canali complementari: `cargo install becket-cli` e build da sorgente.
+Canale complementare: build da sorgente (contributor, repo clonato).
 
 ## Conseguenze
 

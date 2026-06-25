@@ -55,11 +55,10 @@ See [CODEMAP.md](./CODEMAP.md) and [ARCHITECTURE.md](./ARCHITECTURE.md) for exec
 
 ## Adoption workflow (for contributors testing the tool)
 
-1. `cargo install becket-cli becket-mcp --locked` (or build from source)
-2. `becket build` in a fixture repo or this monorepo
-3. `becket context <Symbol> --budget 6000 --task fix` — verify markdown bundle
-4. `becket wiki lint --strict` — verify lint passes
-5. Wire `becket-mcp` in Cursor (see README) and confirm `get_context` / `get_wiki`
+1. `./scripts/becket-local.sh build` (or `cargo run -p becket-cli -- build`) in a fixture repo or this monorepo
+2. `becket context <Symbol> --budget 6000 --task fix` — verify markdown bundle
+3. `becket wiki lint --strict` — verify lint passes
+4. Wire `becket-mcp` in Cursor (see README) and confirm `get_context` / `get_wiki`
 
 ## Adding a language (tree-sitter plugin)
 

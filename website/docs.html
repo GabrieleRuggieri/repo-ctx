@@ -243,7 +243,7 @@ becket domain add payment src/billing/** PaymentService</code></pre>
           <h2 data-i18n="docs.adoption.title">Quick start</h2>
           <p data-i18n="docs.adoption.desc">Three steps to wire Becket into your agent workflow.</p>
           <ol class="adoption-steps">
-            <li data-i18n="docs.adoption.s1">Install becket-cli and becket-mcp (npm or Cargo).</li>
+            <li data-i18n="docs.adoption.s1">Install becket and becket-mcp via npm.</li>
             <li data-i18n="docs.adoption.s2">Run becket build in your repository root.</li>
             <li data-i18n="docs.adoption.s3">Add becket-mcp to Cursor or Claude Code — the agent calls get_context before edits.</li>
           </ol>
@@ -269,14 +269,9 @@ becket domain add payment src/billing/** PaymentService</code></pre>
 
           <h3 data-i18n="docs.install.npm">npm</h3>
           <div class="code-block glass-card">
-            <div class="code-header"><span>terminal</span><button class="copy-btn" data-copy="npx becket build">Copy</button></div>
-            <pre><code>npx becket build</code></pre>
-          </div>
-
-          <h3 data-i18n="docs.install.cargo">Cargo</h3>
-          <div class="code-block glass-card">
-            <div class="code-header"><span>terminal</span><button class="copy-btn" data-copy="cargo install becket">Copy</button></div>
-            <pre><code>cargo install becket</code></pre>
+            <div class="code-header"><span>terminal</span><button class="copy-btn" data-copy="npm install -g becket becket-mcp">Copy</button></div>
+            <pre><code>npm install -g becket becket-mcp
+npx becket build</code></pre>
           </div>
 
           <div class="install-note glass-card">
