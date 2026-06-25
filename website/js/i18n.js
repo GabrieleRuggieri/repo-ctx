@@ -518,7 +518,13 @@ function setLanguage(lang) {
   });
 
   const langBtn = document.getElementById("lang-toggle");
-  if (langBtn) langBtn.textContent = lang === "en" ? "IT" : "EN";
+  if (langBtn) {
+    langBtn.textContent = lang === "it" ? "IT" : "EN";
+    langBtn.setAttribute(
+      "aria-label",
+      lang === "it" ? "Switch to English" : "Passa all'italiano",
+    );
+  }
 
   if (typeof window.restartTyping === "function") {
     window.restartTyping();
