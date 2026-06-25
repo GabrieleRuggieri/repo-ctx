@@ -45,5 +45,7 @@ pub fn preload_onnx_model() {}
 
 #[cfg(not(feature = "onnx"))]
 pub fn hash_embed_forced() -> bool {
-    false
+    std::env::var(HASH_EMBED_ENV)
+        .ok()
+        .is_some_and(|value| matches!(value.as_str(), "1" | "true" | "yes"))
 }

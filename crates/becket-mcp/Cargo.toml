@@ -12,10 +12,14 @@ rust-version.workspace = true
 name = "becket-mcp"
 path = "src/main.rs"
 
+[features]
+default = []
+onnx = ["becket-core/onnx", "becket-query/onnx"]
+
 [dependencies]
 anyhow = { workspace = true }
-becket-core = { workspace = true }
-becket-query = { workspace = true }
+becket-core = { workspace = true, default-features = false }
+becket-query = { workspace = true, default-features = false }
 becket-schema = { workspace = true }
 becket-store = { workspace = true }
 rmcp = { workspace = true }

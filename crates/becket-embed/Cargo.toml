@@ -8,7 +8,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [features]
-default = ["onnx"]
+default = []
 onnx = ["dep:fastembed", "dep:dirs"]
 
 [dependencies]

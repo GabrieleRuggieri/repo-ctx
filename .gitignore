@@ -67,6 +67,7 @@ logs/
 
 # ===== Netlify =====
 .netlify/
+.vercel/
 
 # ===== Misc =====
 *.tmp

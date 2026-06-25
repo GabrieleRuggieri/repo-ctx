@@ -11,6 +11,14 @@ Becket ships via **cargo-dist** (see `dist-workspace.toml` and [ADR-0004](../doc
 | npm | `becket`, `becket-mcp` | `npx becket build` — binary downloaded at install |
 | Cargo | `becket-cli`, `becket-mcp` crates | `cargo install becket-cli --locked` |
 
+## ONNX embeddings (optional, from source)
+
+Release binaries use deterministic hash embeddings (fast, no model download). For ONNX semantic search when building from source:
+
+```bash
+cargo install --path crates/becket-cli --features onnx --locked
+```
+
 ## Cutting a release
 
 1. Bump `version` in root `Cargo.toml` (`[workspace.package]`) and run `cargo update -w`.

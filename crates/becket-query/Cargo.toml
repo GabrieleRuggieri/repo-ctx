@@ -7,12 +7,16 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+[features]
+default = []
+onnx = ["becket-embed/onnx", "becket-core/onnx"]
+
 [dependencies]
 anyhow = { workspace = true }
-becket-embed = { workspace = true }
+becket-embed = { workspace = true, default-features = false }
 becket-schema = { workspace = true }
 becket-store = { workspace = true }
-becket-core = { workspace = true }
+becket-core = { workspace = true, default-features = false }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

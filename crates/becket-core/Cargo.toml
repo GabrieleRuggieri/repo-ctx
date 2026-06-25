@@ -7,10 +7,14 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+[features]
+default = []
+onnx = ["becket-embed/onnx"]
+
 [dependencies]
 anyhow = { workspace = true }
 ignore = { workspace = true }
-becket-embed = { workspace = true }
+becket-embed = { workspace = true, default-features = false }
 becket-schema = { workspace = true }
 becket-store = { workspace = true }
 regex = { workspace = true }

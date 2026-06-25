@@ -2,6 +2,18 @@
 
 All notable changes to Becket are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.1] - 2025-06-25
+
+### Fixed
+
+- Release CI: distributed binaries build without ONNX by default (hash embeddings), fixing cross-platform `cargo-dist` failures
+- `hash_embed_forced()` honors `BECKET_HASH_EMBED` when ONNX feature is disabled
+
+### Changed
+
+- Website deploy config: Vercel (`vercel.json`) replaces Netlify
+- Local dev: `scripts/becket-local.sh` runs becket from source without install
+
 ## [0.2.0] - 2025-06-25
 
 ### Added
@@ -31,5 +43,6 @@ All notable changes to Becket are documented here. The format follows [Keep a Ch
 - Local SQLite index and versioned JSON artifacts under `.becket/`
 - tree-sitter parsing for Rust, TypeScript/JavaScript, Python, Go, Java
 
+[0.2.1]: https://github.com/GabrieleRuggieri/becket/releases/tag/v0.2.1
 [0.2.0]: https://github.com/GabrieleRuggieri/becket/releases/tag/v0.2.0
 [0.1.0]: https://github.com/GabrieleRuggieri/becket/releases/tag/v0.1.0

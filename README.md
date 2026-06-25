@@ -19,7 +19,7 @@ It acts as a bridge between:
 - AI coding agents (Claude Code, Cursor, Codex, etc.)
 - Developers navigating and refactoring systems
 
-**Website:** [becket.dev](https://becket.dev) (or browse [`website/`](./website/) locally) · **Releases:** [GitHub Releases](https://github.com/GabrieleRuggieri/becket/releases)
+**Website:** [becket.dev](https://becket.dev) (Vercel) · **Releases:** [GitHub Releases](https://github.com/GabrieleRuggieri/becket/releases)
 
 ---
 
@@ -45,7 +45,11 @@ These work **now**. No bundled LLM — optional prose enrichment uses your MCP h
 ```bash
 # 1. Install (pick one)
 cargo install becket-cli becket-mcp --locked
-# or: npx becket build   (downloads binary)
+# or from this repo before a release is available:
+./scripts/becket-local.sh build
+# optional ONNX embeddings when building from source:
+# cargo install --path crates/becket-cli --features onnx --locked
+# or: npx becket build   (downloads binary after release)
 
 # 2. Index your repo
 cd your-project && becket build
