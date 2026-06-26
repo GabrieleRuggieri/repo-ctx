@@ -19,7 +19,7 @@ const translations = {
     "hero.install.terminal": "terminal",
     "hero.install.copy": "Copy",
     "hero.install.mcpHint":
-      'Built for Cursor and Claude Code — install <code>becket-mcp</code> and follow the <a href="docs.html#quickstart">Quick Start</a>.',
+      'For AI coding agents, install <code>becket-mcp</code> and follow the <a href="docs.html#quickstart">Quick Start</a>.',
     "hero.stat1": "Local & Free",
     "hero.stat2": "Telemetry",
     "hero.stat3": "Knowledge Layers",
@@ -82,8 +82,8 @@ const translations = {
       "Graph JSON + grounded wiki pages survive across agent sessions. Incremental rebuild on watch; stale wiki flagged automatically.",
     "product.p3.title": "Query per task",
     "product.p3.desc":
-      "MCP <code>get_context</code> in Cursor / Claude Code — or CLI <code>context</code>, <code>impact</code>, <code>flow</code> from the terminal.",
-    "product.li1": "MCP in Cursor / Claude Code — agent can call get_context when your rules or prompt ask for it",
+      "MCP <code>get_context</code> in your agent — or CLI <code>context</code>, <code>impact</code>, <code>flow</code> from the terminal.",
+    "product.li1": "MCP in any supported agent — call get_context when your rules or prompt ask for it",
     "product.li2": "Local .becket/ cache — gitignore it, rebuild anytime with becket build",
     "product.li3": "Demo folder in the repo — try Becket in 30 seconds",
     "product.li4": "Cross-repo workspace linking for monorepos and polyrepos",
@@ -98,15 +98,17 @@ const translations = {
     "features.f4.title": "Context Assembly",
     "features.f4.desc": "One markdown bundle with code snippets, wiki, and impact — packed within a token budget.",
     "integrations.tag": "Integrations",
-    "integrations.title": "Built for Cursor and Claude Code",
-    "integrations.sub": "Primary workflow: MCP server inside your IDE. CLI for indexing, inspection, and CI.",
+    "integrations.title": "Works with your AI coding stack",
+    "integrations.sub": "MCP for agents (Cursor, Claude Code, Codex, Windsurf, Cline, Zed, …). CLI for indexing and scripts.",
     "integrations.cursor":
-      "Add becket-mcp to .cursor/mcp.json — expose get_context, get_impact, get_wiki to the agent (use a project rule so it calls them when needed).",
+      "Add becket-mcp to .cursor/mcp.json — expose get_context, get_impact, get_wiki (use a project rule so the agent calls them when needed).",
     "integrations.claude":
-      "Same MCP server in Claude Code settings. Agent pulls verified context before modifying code.",
-    "integrations.otherTitle": "Other MCP hosts",
+      "Claude Code and Claude Desktop — same MCP config pattern, any repo root via BECKET_ROOT.",
     "integrations.codex":
-      "Any MCP-compatible agent can use the same tools over stdio.",
+      "Codex CLI and OpenAI agent tooling — register becket-mcp for structured repo context before edits.",
+    "integrations.otherTitle": "Windsurf · Cline · Zed · …",
+    "integrations.other":
+      "Any IDE or CLI that supports MCP over stdio gets get_context, get_wiki, get_impact, get_flow, get_dependencies.",
     "integrations.mcp":
       "becket-mcp: get_context (code + wiki + impact), get_wiki, get_impact, get_flow, get_dependencies.",
     "cta.title": "Verified, compounding memory for AI coding agents",
@@ -142,21 +144,22 @@ const translations = {
     "docs.quickstart.badge": "Recommended path",
     "docs.quickstart.title": "Quick Start",
     "docs.quickstart.lead":
-      "Becket helps Cursor and Claude Code use fewer tokens with better context: index once locally, then the agent can call MCP tools to pull verified snippets instead of reading whole files.",
+      "Becket helps AI coding agents use fewer tokens with better context: index once locally, then any MCP-capable agent can call get_context, get_impact, and get_wiki instead of reading whole files.",
     "docs.quickstart.s1": "Install globally: <code>npm install -g becket becket-mcp</code> (or use <code>npx becket build</code> without global install).",
     "docs.quickstart.s2": "Index your repo: <code>cd your-project && becket build</code> (creates <code>.becket/</code>).",
     "docs.quickstart.s3": "Add <code>becket-mcp</code> to your MCP config (see below) with <code>BECKET_ROOT</code> set to your project root.",
     "docs.quickstart.s4": "Add a project rule (see MCP section) or ask the agent to call <code>get_context</code> on the symbol you are editing.",
     "docs.quickstart.callout":
       "<strong>Try first:</strong> clone the repo and run <code>cd demo && npx becket build</code> — a mini shop codebase ready to index.",
-    "docs.quickstart.cursorTitle": "Cursor — MCP config",
-    "docs.quickstart.claudeTitle": "Claude Code — MCP config",
-    "docs.quickstart.claudeNote": "Replace the path with your project root. Claude Code reads the same MCP server as Cursor.",
+    "docs.quickstart.exampleTitle": "Example — Cursor",
+    "docs.quickstart.claudeTitle": "Example — Claude Code / Desktop",
+    "docs.quickstart.hostsNote":
+      "Same server for Codex CLI, Windsurf, Cline, Zed, or any host that supports MCP over stdio — point BECKET_ROOT at your repo and run becket build first.",
     "docs.overview.title": "Overview",
     "docs.overview.lead":
       "Becket is a local intelligence layer that combines a verified code graph, a graph-grounded knowledge wiki, and context assembly that returns real source snippets for AI agents and developers.",
     "docs.overview.mcpFirst":
-      "Primary workflow: MCP in your IDE so the agent can call get_context when needed — fewer tokens than @-mentioning whole files. The CLI indexes and inspects; it does not replace the agent. Add a project rule so the agent actually uses the tools.",
+      "Primary workflow: MCP in any agent that supports it — Cursor, Claude Code, Codex, Windsurf, Cline, Zed, and others. The agent calls get_context when needed; fewer tokens than @-mentioning whole files. The CLI indexes and inspects; it does not replace the agent. Add a project rule so the agent actually uses the tools.",
     "docs.demo.title": "Demo walkthrough",
     "docs.demo.desc":
       "The repository includes a demo/ folder — a mini shop with payment, order, and shipping flows. Use it to try Becket without touching your own codebase.",
@@ -167,7 +170,7 @@ const translations = {
     "docs.audience.desc": "Becket targets developers and teams working on real codebases with AI coding agents.",
     "docs.audience.th.role": "You are…",
     "docs.audience.th.do": "Do this",
-    "docs.audience.r1": "Cursor / Claude Code user",
+    "docs.audience.r1": "AI coding agent user (MCP)",
     "docs.audience.d1": "<code>becket build</code> once → MCP config → agent calls <code>get_context</code>",
     "docs.audience.r2": "Developer (CLI only)",
     "docs.audience.d2": "<code>becket build</code> → <code>impact</code> / <code>context</code> / <code>flow</code> before refactors",
@@ -219,7 +222,7 @@ const translations = {
       "Other extensions can map to a built-in grammar via becket.languages.toml at the repo root. See CONTRIBUTING.md for adding new languages.",
     "docs.mcp.title": "MCP Integration",
     "docs.mcp.desc":
-      "Becket exposes an MCP server over stdio. Cursor and Claude Code list its tools alongside other MCP servers — the agent invokes them during a chat turn when relevant.",
+      "Becket exposes an MCP server over stdio. Any compatible host — Cursor, Claude Code, Codex, Windsurf, Cline, Zed, etc. — lists its tools during a chat turn; the agent invokes them when relevant.",
     "docs.mcp.th.tool": "Tool",
     "docs.mcp.th.desc": "Description",
     "docs.mcp.th.when": "When to use",
@@ -237,11 +240,11 @@ const translations = {
       "Wiki prose and summaries use MCP sampling — your host agent's model writes intent and gotchas. Becket ships no LLM, holds no API keys, and never generates code — only slices real source from disk.",
     "docs.mcp.howTitle": "How does the agent call get_context?",
     "docs.mcp.howDesc":
-      "Becket does not hook into every keystroke. MCP exposes tools to Cursor or Claude Code; the agent decides when to call them — same as any other MCP tool. Tool names and descriptions tell the model what is available; it invokes get_context when your task needs codebase context (fix a bug, refactor a symbol, etc.).",
+      "Becket does not hook into every keystroke. MCP exposes tools to your agent host; the model decides when to call them — same as any other MCP tool. It invokes get_context when your task needs codebase context (fix a bug, refactor a symbol, etc.).",
     "docs.mcp.howTip":
       "For reliable use, add a project rule or ask explicitly — e.g. “use Becket get_context on PaymentService before editing”. Without that, the agent may skip the tool and guess from open files alone.",
-    "docs.mcp.rulesTitle": "Cursor — project rule (recommended)",
-    "docs.mcp.rulesNote": "Claude Code: add the same instruction in CLAUDE.md or your project system prompt.",
+    "docs.mcp.rulesTitle": "Project rule (recommended — Cursor, Claude Code, …)",
+    "docs.mcp.rulesNote": "Add the same instruction wherever your agent reads project rules: CLAUDE.md, .cursor/rules, Codex config, etc.",
     "docs.mcp.cliNote":
       "<strong>CLI vs MCP:</strong> becket context returns the same bundle as get_context. MCP lets the agent fetch it inside the chat; the CLI is for you in the terminal. Neither runs by itself — MCP needs an agent turn; CLI needs you to run the command.",
     "docs.advanced.title": "Advanced",
@@ -275,19 +278,19 @@ const translations = {
       "Run becket build in the repository root first. MCP reads from .becket/ — without a build, there is nothing to query.",
     "docs.faq.q3": "becket-mcp command not found",
     "docs.faq.a3":
-      "Install globally: npm install -g becket-mcp. Ensure your npm global bin directory is on PATH. Restart Cursor/Claude Code after installing.",
-    "docs.faq.q4": "Can I use Becket without Cursor or Claude Code?",
+      "Install globally: npm install -g becket-mcp. Ensure your npm global bin directory is on PATH. Restart your IDE or agent CLI after installing.",
+    "docs.faq.q4": "Can I use Becket without an AI coding agent?",
     "docs.faq.a4":
-      "Yes — the CLI provides context, impact, and flow for terminal workflows. MCP is for the same queries inside Cursor/Claude when the agent calls the tools. Becket does not edit code or run an LLM by itself.",
+      "Yes — the CLI provides context, impact, and flow for terminal workflows. MCP is for the same queries inside any agent that supports it. Becket does not edit code or run an LLM by itself.",
     "docs.faq.q5": "Does Becket send my code to the cloud?",
     "docs.faq.a5":
-      "No. All analysis runs locally. Optional wiki prose enrichment uses your MCP host's model (Cursor/Claude) — Becket itself holds no API keys and sends no telemetry.",
+      "No. All analysis runs locally. Optional wiki prose enrichment uses your MCP host's model — Becket itself holds no API keys and sends no telemetry.",
     "docs.faq.q6": "What symbol name should I use?",
     "docs.faq.a6":
       "Use a function, class, or module name visible in your source — e.g. capture, PaymentService, or a fully qualified name. Run becket build first; symbols come from the indexed graph.",
     "docs.faq.q7": "Does get_context run automatically on every edit?",
     "docs.faq.a7":
-      "No. Cursor and Claude Code expose Becket as MCP tools; the agent calls them when it decides they are needed (or when your rules/prompt tell it to). Add a project rule or ask explicitly for best results. Becket is not a background daemon inside the IDE.",
+      "No. Your agent host exposes Becket as MCP tools; the model calls them when it decides they are needed (or when your rules/prompt tell it to). Add a project rule or ask explicitly for best results. Becket is not a background daemon inside the IDE.",
     "docs.faq.q8": "Should I commit .becket/ or .becket/wiki/?",
     "docs.faq.a8":
       "No, for the typical workflow. Keep .becket/ in .gitignore and run becket build locally (or --watch). Committing wiki pages is only for niche teams that want shared prose in git — not required to save tokens or speed up your agent.",
@@ -318,8 +321,8 @@ const translations = {
     "docs.install.title": "Installation",
     "docs.install.desc":
       "Becket is free and open source (Apache-2.0). No account, no subscription, no telemetry. You need Node.js/npm for the install wrappers — Rust is only required if you build from source.",
-    "docs.install.path1.title": "Cursor / Claude Code",
-    "docs.install.path1.desc": "Install both packages globally so MCP finds them on PATH.",
+    "docs.install.path1.title": "AI agents (MCP)",
+    "docs.install.path1.desc": "Install both packages globally so any MCP host (Cursor, Claude Code, Codex, …) finds them on PATH.",
     "docs.install.path2.title": "Try without global install",
     "docs.install.path2.desc": "Downloads the native binary on first run. Good for a one-off index or the demo folder.",
     "docs.install.note":
@@ -345,7 +348,7 @@ const translations = {
     "hero.install.terminal": "terminale",
     "hero.install.copy": "Copia",
     "hero.install.mcpHint":
-      'Pensato per Cursor e Claude Code — installa <code>becket-mcp</code> e segui la <a href="docs.html#quickstart">guida rapida</a>.',
+      'Per agenti di coding AI, installa <code>becket-mcp</code> e segui la <a href="docs.html#quickstart">guida rapida</a>.',
     "hero.stat1": "Locale e gratuito",
     "hero.stat2": "Telemetria",
     "hero.stat3": "Layer di conoscenza",
@@ -408,8 +411,8 @@ const translations = {
       "JSON del grafo + pagine wiki ancorate tra le sessioni. Rebuild incrementale in watch; wiki stale segnalata automaticamente.",
     "product.p3.title": "Query per task",
     "product.p3.desc":
-      "MCP <code>get_context</code> in Cursor / Claude Code — oppure CLI <code>context</code>, <code>impact</code>, <code>flow</code> da terminale.",
-    "product.li1": "MCP in Cursor / Claude Code — l'agente può chiamare get_context quando glielo chiedono rule o prompt",
+      "MCP <code>get_context</code> nel tuo agente — oppure CLI <code>context</code>, <code>impact</code>, <code>flow</code> da terminale.",
+    "product.li1": "MCP in qualsiasi agente supportato — chiama get_context quando glielo chiedono rule o prompt",
     "product.li2": "Cache locale .becket/ — mettila in gitignore, rebuild con becket build",
     "product.li3": "Cartella demo nel repo — prova Becket in 30 secondi",
     "product.li4": "Workspace cross-repo per monorepo e polyrepo",
@@ -424,14 +427,17 @@ const translations = {
     "features.f4.title": "Context assembly",
     "features.f4.desc": "Un bundle markdown con snippet, wiki e impact — nel budget token.",
     "integrations.tag": "Integrazioni",
-    "integrations.title": "Pensato per Cursor e Claude Code",
-    "integrations.sub": "Workflow principale: server MCP nell'IDE. CLI per indicizzazione, ispezione e CI.",
+    "integrations.title": "Funziona con il tuo stack AI",
+    "integrations.sub": "MCP per agenti (Cursor, Claude Code, Codex, Windsurf, Cline, Zed, …). CLI per indicizzazione e script.",
     "integrations.cursor":
-      "Aggiungi becket-mcp a .cursor/mcp.json — espone get_context, get_impact, get_wiki all'agente (usa una project rule per farglieli chiamare quando serve).",
+      "Aggiungi becket-mcp a .cursor/mcp.json — espone get_context, get_impact, get_wiki (usa una project rule per farglieli chiamare quando serve).",
     "integrations.claude":
-      "Lo stesso server MCP nelle impostazioni di Claude Code. L'agente recupera contesto verificato prima di modificare il codice.",
-    "integrations.otherTitle": "Altri host MCP",
-    "integrations.codex": "Qualsiasi agente compatibile MCP può usare gli stessi tool su stdio.",
+      "Claude Code e Claude Desktop — stesso schema MCP, BECKET_ROOT sulla root del repo.",
+    "integrations.otherTitle": "Windsurf · Cline · Zed · …",
+    "integrations.codex":
+      "Codex CLI e tooling OpenAI — registra becket-mcp per contesto strutturato sul repo prima delle modifiche.",
+    "integrations.other":
+      "Qualsiasi IDE o CLI con MCP su stdio ottiene get_context, get_wiki, get_impact, get_flow, get_dependencies.",
     "integrations.mcp":
       "becket-mcp: get_context (codice + wiki + impact), get_wiki, get_impact, get_flow, get_dependencies.",
     "cta.title": "Memoria verificata per agenti di coding AI",
@@ -467,21 +473,22 @@ const translations = {
     "docs.quickstart.badge": "Percorso consigliato",
     "docs.quickstart.title": "Guida rapida",
     "docs.quickstart.lead":
-      "Becket aiuta Cursor e Claude Code a usare meno token con contesto migliore: indicizzi una volta in locale, poi l'agente può chiamare i tool MCP per snippet verificati invece di leggere file interi.",
+      "Becket aiuta gli agenti di coding AI a usare meno token con contesto migliore: indicizzi una volta in locale, poi qualsiasi host MCP può chiamare get_context, get_impact e get_wiki invece di leggere file interi.",
     "docs.quickstart.s1": "Installa globalmente: <code>npm install -g becket becket-mcp</code> (oppure <code>npx becket build</code> senza install globale).",
     "docs.quickstart.s2": "Indicizza il repo: <code>cd your-project && becket build</code> (crea <code>.becket/</code>).",
     "docs.quickstart.s3": "Aggiungi <code>becket-mcp</code> alla config MCP (sotto) con <code>BECKET_ROOT</code> sulla root del progetto.",
     "docs.quickstart.s4": "Aggiungi una project rule (sezione MCP) o chiedi all'agente di chiamare <code>get_context</code> sul simbolo che stai modificando.",
     "docs.quickstart.callout":
       "<strong>Prova subito:</strong> clona il repo ed esegui <code>cd demo && npx becket build</code> — una mini codebase pronta da indicizzare.",
-    "docs.quickstart.cursorTitle": "Cursor — config MCP",
-    "docs.quickstart.claudeTitle": "Claude Code — config MCP",
-    "docs.quickstart.claudeNote": "Sostituisci il path con la root del tuo progetto. Claude Code usa lo stesso server MCP di Cursor.",
+    "docs.quickstart.exampleTitle": "Esempio — Cursor",
+    "docs.quickstart.claudeTitle": "Esempio — Claude Code / Desktop",
+    "docs.quickstart.hostsNote":
+      "Stesso server per Codex CLI, Windsurf, Cline, Zed o qualsiasi host MCP su stdio — punta BECKET_ROOT al repo ed esegui becket build prima.",
     "docs.overview.title": "Panoramica",
     "docs.overview.lead":
       "Becket è un layer di intelligenza locale che combina grafo verificato, wiki ancorata al grafo e context assembly con snippet di sorgente reali per agenti AI e sviluppatori.",
     "docs.overview.mcpFirst":
-      "Workflow principale: MCP nell'IDE così l'agente può chiamare get_context quando serve — meno token che @-menzionare file interi. La CLI indicizza e ispeziona; non sostituisce l'agente. Aggiungi una project rule perché usi davvero i tool.",
+      "Workflow principale: MCP in qualsiasi agente che lo supporta — Cursor, Claude Code, Codex, Windsurf, Cline, Zed, ecc. L'agente chiama get_context quando serve; meno token che @-menzionare file interi. La CLI indicizza e ispeziona; non sostituisce l'agente. Aggiungi una project rule perché usi davvero i tool.",
     "docs.demo.title": "Walkthrough demo",
     "docs.demo.desc":
       "Il repository include una cartella demo/ — un mini shop con flussi payment, order e shipping. Usala per provare Becket senza toccare la tua codebase.",
@@ -492,7 +499,7 @@ const translations = {
     "docs.audience.desc": "Becket è per sviluppatori e team che lavorano su codebase reali con agenti di coding AI.",
     "docs.audience.th.role": "Sei…",
     "docs.audience.th.do": "Fai così",
-    "docs.audience.r1": "Utente Cursor / Claude Code",
+    "docs.audience.r1": "Utente agente di coding AI (MCP)",
     "docs.audience.d1": "<code>becket build</code> una volta → config MCP → l'agente chiama <code>get_context</code>",
     "docs.audience.r2": "Sviluppatore (solo CLI)",
     "docs.audience.d2": "<code>becket build</code> → <code>impact</code> / <code>context</code> / <code>flow</code> prima dei refactor",
@@ -543,7 +550,7 @@ const translations = {
       "Altre estensioni possono mappare a una grammatica built-in via becket.languages.toml nella root del repo. Vedi CONTRIBUTING.md per aggiungere linguaggi.",
     "docs.mcp.title": "Integrazione MCP",
     "docs.mcp.desc":
-      "Becket espone un server MCP su stdio. Cursor e Claude Code elencano i suoi tool insieme agli altri server MCP — l'agente li invoca durante un turno di chat quando servono.",
+      "Becket espone un server MCP su stdio. Qualsiasi host compatibile — Cursor, Claude Code, Codex, Windsurf, Cline, Zed, ecc. — elenca i tool durante un turno di chat; l'agente li invoca quando servono.",
     "docs.mcp.th.tool": "Tool",
     "docs.mcp.th.desc": "Descrizione",
     "docs.mcp.th.when": "Quando usarlo",
@@ -561,11 +568,11 @@ const translations = {
       "La prosa wiki e i riassunti usano MCP sampling — il modello del tuo agente scrive intent e gotcha. Becket non include LLM, non ha API key e non genera codice — solo slice reali dal disco.",
     "docs.mcp.howTitle": "Come fa l'agente a chiamare get_context?",
     "docs.mcp.howDesc":
-      "Becket non si aggancia a ogni keystroke. MCP espone i tool a Cursor o Claude Code; l'agente decide quando chiamarli — come qualsiasi altro tool MCP. Nome e descrizione del tool dicono al modello cosa c'è; invoca get_context quando il task richiede contesto sulla codebase (fix, refactor, ecc.).",
+      "Becket non si aggancia a ogni keystroke. MCP espone i tool al tuo host agente; il modello decide quando chiamarli — come qualsiasi altro tool MCP. Invoca get_context quando il task richiede contesto sulla codebase (fix, refactor, ecc.).",
     "docs.mcp.howTip":
       "Per usarlo in modo affidabile, aggiungi una project rule o chiedi esplicitamente — es. “usa Becket get_context su PaymentService prima di modificare”. Senza questo, l'agente può saltare il tool e indovinare dai file aperti.",
-    "docs.mcp.rulesTitle": "Cursor — project rule (consigliata)",
-    "docs.mcp.rulesNote": "Claude Code: stessa istruzione in CLAUDE.md o nel system prompt di progetto.",
+    "docs.mcp.rulesTitle": "Project rule (consigliata — Cursor, Claude Code, …)",
+    "docs.mcp.rulesNote": "Stessa istruzione dove l'agente legge le rule di progetto: CLAUDE.md, .cursor/rules, config Codex, ecc.",
     "docs.mcp.cliNote":
       "<strong>CLI vs MCP:</strong> becket context restituisce lo stesso bundle di get_context. MCP fa recuperare il bundle all'agente in chat; la CLI è per te da terminale. Nessuno dei due gira da solo — MCP serve un turno agente; la CLI un comando tuo.",
     "docs.advanced.title": "Avanzato",
@@ -599,19 +606,19 @@ const translations = {
       "Esegui becket build nella root del repository prima. MCP legge da .becket/ — senza build non c'è nulla da interrogare.",
     "docs.faq.q3": "Comando becket-mcp non trovato",
     "docs.faq.a3":
-      "Installa globalmente: npm install -g becket-mcp. Verifica che la directory bin globale di npm sia nel PATH. Riavvia Cursor/Claude Code dopo l'installazione.",
-    "docs.faq.q4": "Posso usare Becket senza Cursor o Claude Code?",
+      "Installa globalmente: npm install -g becket-mcp. Verifica che la directory bin globale di npm sia nel PATH. Riavvia IDE o CLI agente dopo l'installazione.",
+    "docs.faq.q4": "Posso usare Becket senza un agente di coding AI?",
     "docs.faq.a4":
-      "Sì — la CLI offre context, impact e flow da terminale. MCP è per le stesse query in Cursor/Claude quando l'agente chiama i tool. Becket non modifica codice né esegue un LLM da solo.",
+      "Sì — la CLI offre context, impact e flow da terminale. MCP è per le stesse query in qualsiasi agente che lo supporta. Becket non modifica codice né esegue un LLM da solo.",
     "docs.faq.q5": "Becket invia il mio codice al cloud?",
     "docs.faq.a5":
-      "No. Tutta l'analisi gira in locale. L'arricchimento prosa wiki opzionale usa il modello del tuo host MCP (Cursor/Claude) — Becket non ha API key e non invia telemetria.",
+      "No. Tutta l'analisi gira in locale. L'arricchimento prosa wiki opzionale usa il modello del tuo host MCP — Becket non ha API key e non invia telemetria.",
     "docs.faq.q6": "Quale nome simbolo devo usare?",
     "docs.faq.a6":
       "Usa un nome di funzione, classe o modulo visibile nel sorgente — es. capture, PaymentService, o un nome fully qualified. Esegui becket build prima; i simboli vengono dal grafo indicizzato.",
     "docs.faq.q7": "get_context parte automaticamente a ogni modifica?",
     "docs.faq.a7":
-      "No. Cursor e Claude Code espongono Becket come tool MCP; l'agente li chiama quando decide che servono (o quando glielo dicono rule/prompt). Aggiungi una project rule o chiedi esplicitamente. Becket non è un daemon in background nell'IDE.",
+      "No. Il tuo host agente espone Becket come tool MCP; il modello li chiama quando decide che servono (o quando glielo dicono rule/prompt). Aggiungi una project rule o chiedi esplicitamente. Becket non è un daemon in background nell'IDE.",
     "docs.faq.q8": "Devo committare .becket/ o .becket/wiki/?",
     "docs.faq.a8":
       "No, nel workflow tipico. Tieni .becket/ in .gitignore e fai becket build in locale (o --watch). Committare la wiki serve solo a team di nicchia che vogliono prosa condivisa in git — non serve per risparmiare token o velocizzare l'agente.",
@@ -641,8 +648,8 @@ const translations = {
     "docs.install.title": "Installazione",
     "docs.install.desc":
       "Becket è gratuito e open source (Apache-2.0). Nessun account, nessun abbonamento, zero telemetria. Serve Node.js/npm per i wrapper di install — Rust solo se compili da sorgente.",
-    "docs.install.path1.title": "Cursor / Claude Code",
-    "docs.install.path1.desc": "Installa entrambi i pacchetti globalmente così MCP li trova nel PATH.",
+    "docs.install.path1.title": "Agenti AI (MCP)",
+    "docs.install.path1.desc": "Installa entrambi i pacchetti globalmente così qualsiasi host MCP (Cursor, Claude Code, Codex, …) li trova nel PATH.",
     "docs.install.path2.title": "Prova senza install globale",
     "docs.install.path2.desc": "Scarica il binario nativo al primo run. Ideale per un test o la cartella demo.",
     "docs.install.note":

@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Becket — verified code graph + grounded knowledge wiki + context assembly for AI coding agents" />
+  <meta name="description" content="Becket — local MCP context layer for AI coding agents" />
   <title>Becket — AI Context & Impact Engine</title>
   <link rel="icon" type="image/svg+xml" href="public/favicon.svg" />
-  <link rel="preload" href="css/styles.css?v=14" as="style" />
-  <link rel="stylesheet" href="css/styles.css?v=14" />
+  <link rel="preload" href="css/styles.css?v=15" as="style" />
+  <link rel="stylesheet" href="css/styles.css?v=15" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -226,7 +226,7 @@
         </article>
       </div>
       <ul class="check-list product-workflows reveal" data-delay="50">
-        <li data-i18n="product.li1">MCP in Cursor / Claude Code — agent can call get_context when your rules or prompt ask for it</li>
+        <li data-i18n="product.li1">MCP in any supported agent — call get_context when your rules or prompt ask for it</li>
         <li data-i18n="product.li2">Local .becket/ cache — gitignore it, rebuild anytime with becket build</li>
         <li data-i18n="product.li3">Demo folder in the repo — try Becket in 30 seconds</li>
         <li data-i18n="product.li4">Cross-repo workspace linking for monorepos and polyrepos</li>
@@ -274,8 +274,12 @@
           <p data-i18n="integrations.claude">Agents call becket context, impact, and flow before modifying code.</p>
         </div>
         <div class="integration glass-card">
-          <h3 data-i18n="integrations.otherTitle">Other MCP hosts</h3>
-          <p data-i18n="integrations.codex">Any MCP-compatible agent can use the same tools over stdio.</p>
+          <h3>OpenAI Codex</h3>
+          <p data-i18n="integrations.codex">Codex CLI and other agent CLIs — wire becket-mcp as an MCP server for structured repo context.</p>
+        </div>
+        <div class="integration glass-card">
+          <h3 data-i18n="integrations.otherTitle">Windsurf · Cline · Zed · …</h3>
+          <p data-i18n="integrations.other">Any IDE or CLI that supports MCP over stdio gets the same five tools.</p>
         </div>
         <div class="integration glass-card highlight">
           <h3>MCP Server</h3>
@@ -308,7 +312,7 @@
     </div>
   </footer>
 
-  <script src="js/i18n.js?v=16" defer></script>
+  <script src="js/i18n.js?v=19" defer></script>
   <script src="js/main.js" defer></script>
 </body>
 </html>

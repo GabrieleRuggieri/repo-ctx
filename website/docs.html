@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Becket Documentation — MCP setup for Cursor and Claude Code, CLI reference, demo walkthrough" />
+  <meta name="description" content="Becket Documentation — MCP setup for AI coding agents, CLI reference, demo walkthrough" />
   <title>Docs — Becket</title>
   <link rel="icon" type="image/svg+xml" href="public/favicon.svg" />
-  <link rel="preload" href="css/styles.css?v=14" as="style" />
-  <link rel="stylesheet" href="css/styles.css?v=14" />
+  <link rel="preload" href="css/styles.css?v=15" as="style" />
+  <link rel="stylesheet" href="css/styles.css?v=15" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -87,7 +87,7 @@
             <p data-i18n-html="docs.quickstart.callout"></p>
           </div>
 
-          <h3 data-i18n="docs.quickstart.cursorTitle">Cursor — MCP config</h3>
+          <h3 data-i18n="docs.quickstart.exampleTitle">Example — Cursor</h3>
           <div class="code-block glass-card">
             <div class="code-header"><span>.cursor/mcp.json</span><button class="copy-btn" data-copy='{"mcpServers":{"becket":{"command":"becket-mcp","env":{"BECKET_ROOT":"${workspaceFolder}"}}}}'>Copy</button></div>
             <pre><code>{
@@ -102,7 +102,7 @@
 }</code></pre>
           </div>
 
-          <h3 data-i18n="docs.quickstart.claudeTitle">Claude Code — MCP config</h3>
+          <h3 data-i18n="docs.quickstart.claudeTitle">Example — Claude Code / Desktop</h3>
           <div class="code-block glass-card">
             <div class="code-header"><span>~/.claude/claude_desktop_config.json</span><button class="copy-btn" data-copy='{"mcpServers":{"becket":{"command":"becket-mcp","args":[],"env":{"BECKET_ROOT":"/path/to/your/repo"}}}}'>Copy</button></div>
             <pre><code>{
@@ -116,7 +116,7 @@
   }
 }</code></pre>
           </div>
-          <p class="muted" data-i18n="docs.quickstart.claudeNote">Replace the path with your project root. Claude Code reads the same MCP server as Cursor.</p>
+          <p class="muted" data-i18n="docs.quickstart.hostsNote">Same server for Codex CLI, Windsurf, Cline, Zed, or any host that supports MCP over stdio — point <code>BECKET_ROOT</code> at your repo and run <code>becket build</code> first.</p>
         </section>
 
         <!-- Installation -->
@@ -544,7 +544,7 @@ becket domain add payment src/billing/** capture</code></pre>
     </div>
   </footer>
 
-  <script src="js/i18n.js?v=16" defer></script>
+  <script src="js/i18n.js?v=17" defer></script>
   <script src="js/main.js" defer></script>
 </body>
 </html>
