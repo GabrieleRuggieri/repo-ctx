@@ -32,11 +32,11 @@ These work **now**. No bundled LLM — optional prose enrichment uses your MCP h
 | `becket build` | Deterministic graph + **grounded wiki** → `.becket/*.json` + `.becket/wiki/` |
 | `becket impact <symbol>` | What breaks downstream (call graph + modules) |
 | `becket flow <domain>` | End-to-end execution path across services |
-| `becket context <symbol>` | **Markdown bundle**: wiki + real code snippets + impact (`--budget`, `--task`) |
+| `becket context <symbol>` | **Markdown bundle**: knowledge pages + code snippets + impact (`--budget`, `--auto-budget`, `--task`) |
 | `becket wiki sync\|lint\|show` | Recompile stale pages, CI lint, view grounded pages |
 | `becket build --watch` | Incremental rebuild; auto-syncs stale wiki structure |
 | `becket workspace build` | Cross-repo linking (HTTP/gRPC/queue) |
-| MCP `get_context` | Same markdown bundle for agents |
+| MCP `get_context` | Same markdown bundle; `auto_budget: true` or `enrich: true` when needed |
 | MCP `get_wiki` | Grounded wiki page; `enrich=true` fills prose via sampling |
 | MCP `get_impact`, `get_flow`, `get_dependencies` | Same queries for Cursor / Claude Code |
 
@@ -215,16 +215,19 @@ Output:
 
 ```bash
 becket context PaymentService --budget 6000 --task fix
+becket context PaymentService --auto-budget --task fix   # recommended size for this symbol
 becket context PaymentService --json   # structured output for tooling
 ```
 
-One markdown bundle within the token budget:
+One markdown bundle within the token budget (wiki/knowledge, impact, and snippets all count toward it):
 
-- relevant **wiki page** (intent, conventions, gotchas when enriched)
+- relevant **knowledge page** (grounded markdown; intent/gotchas when enriched)
 - **actual code snippets** (callers/callees, sliced from disk)
 - **impact set** and related tests
 
-Task modes: `fix` (default), `refactor`, `onboard`.
+If the budget is too small, the bundle includes a notice with `recommended_tokens`. Use `--auto-budget` or raise `--budget`.
+
+Task modes: `fix` (default), `refactor`, `onboard` (adds flow overview when available).
 
 ---
 

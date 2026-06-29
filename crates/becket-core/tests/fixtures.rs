@@ -201,13 +201,92 @@ fn context_assembly_includes_code_snippets() {
     assert!(ctx.markdown.contains("## Code"));
     assert!(!ctx.snippets.is_empty(), "expected real source snippets");
     if ctx.wiki_page_id.is_some() {
-        assert!(ctx.markdown.contains("## Wiki"));
+        assert!(ctx.markdown.contains("## Knowledge"));
     }
     assert!(
         ctx.snippets
             .iter()
             .any(|s| s.content.contains("fn") || s.content.contains("def")),
         "snippet should contain source"
+    );
+}
+
+#[test]
+fn context_onboard_includes_flow_overview_when_available() {
+    let work = isolated_fixture("flows-payment");
+    BuildPipeline::new(
+        &work.root,
+        BuildOptions {
+            incremental: false,
+            no_embeddings: true,
+        },
+    )
+    .run()
+    .expect("build");
+
+    let engine = QueryEngine::new(&work.root);
+    let ctx = engine
+        .context("checkout", Some(12_000), becket_query::ContextTask::Onboard)
+        .expect("context");
+
+    assert!(
+        ctx.flow_wiki_page_id.is_some(),
+        "onboard should attach a flow knowledge page"
+    );
+    assert!(ctx.markdown.contains("## Flow overview"));
+    assert!(ctx.budget_advice.recommended_tokens > 0);
+}
+
+#[test]
+fn context_budget_advice_flags_tight_budget() {
+    let work = isolated_fixture("flows-payment");
+    BuildPipeline::new(
+        &work.root,
+        BuildOptions {
+            incremental: false,
+            no_embeddings: true,
+        },
+    )
+    .run()
+    .expect("build");
+
+    let engine = QueryEngine::new(&work.root);
+    let ctx = engine
+        .context("checkout", Some(500), becket_query::ContextTask::Fix)
+        .expect("context");
+
+    assert!(ctx.budget_advice.recommended_tokens > ctx.budget_tokens);
+    assert!(!ctx.budget_advice.within_budget);
+    assert!(ctx.markdown.contains("Budget notice"));
+}
+
+#[test]
+fn context_auto_budget_uses_recommendation() {
+    let work = isolated_fixture("flows-payment");
+    BuildPipeline::new(
+        &work.root,
+        BuildOptions {
+            incremental: false,
+            no_embeddings: true,
+        },
+    )
+    .run()
+    .expect("build");
+
+    let engine = QueryEngine::new(&work.root);
+    let ctx = engine
+        .context_with_options(
+            "checkout",
+            becket_query::AssembleOptions {
+                budget: None,
+                task: becket_query::ContextTask::Fix,
+            },
+        )
+        .expect("context");
+
+    assert_eq!(
+        ctx.budget_tokens, ctx.budget_advice.recommended_tokens,
+        "auto budget should match recommendation"
     );
 }
 

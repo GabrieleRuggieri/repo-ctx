@@ -3,13 +3,17 @@
 //! Shared by the CLI and MCP server — no duplicated query logic.
 
 pub mod assemble;
+pub mod budget;
 pub mod engine;
 pub mod error;
 pub mod types;
 
+pub use assemble::{
+    assemble_context, assemble_context_with_options, refresh_context_markdown, AssembleOptions,
+};
 pub use engine::QueryEngine;
 pub use error::QueryError;
 pub use types::{
-    CodeSnippet, ContextResult, ContextTask, DependenciesResult, FlowResult, ImpactResult,
-    SummarySource,
+    BudgetAdvice, CodeSnippet, ContextResult, ContextTask, DependenciesResult, FlowResult,
+    ImpactResult, SummarySource,
 };

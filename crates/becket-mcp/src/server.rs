@@ -16,7 +16,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use tracing::info;
 
-use crate::sampling::{apply_flow_enrichment, apply_symbol_enrichment, enrich_wiki_prose};
+use crate::sampling::{apply_context_enrichment, apply_flow_enrichment, enrich_wiki_prose};
 
 /// Shared server state: repository root for query resolution.
 #[derive(Clone)]
@@ -33,10 +33,16 @@ pub struct BecketMcpServer {
 pub struct GetContextParams {
     /// Symbol name or FQN.
     pub symbol: String,
-    /// Optional token budget (default 6000).
+    /// Optional token budget (default 6000). Omit with `auto_budget: true` for recommended size.
     pub budget: Option<u32>,
+    /// Use the recommended token budget for this symbol and task.
+    #[serde(default)]
+    pub auto_budget: bool,
     /// Task mode: fix, refactor, or onboard.
     pub task: Option<String>,
+    /// Enrich knowledge-page prose via MCP sampling when supported.
+    #[serde(default)]
+    pub enrich: bool,
 }
 
 /// Input for `get_impact`.
@@ -131,13 +137,19 @@ impl BecketMcpServer {
         let engine = self.engine();
         let repo_root = self.repo_root.as_path().to_path_buf();
         let symbol = params.0.symbol;
-        let budget = params.0.budget;
+        let auto_budget = params.0.auto_budget;
+        let budget = if auto_budget { None } else { params.0.budget };
+        let enrich = params.0.enrich;
         let task = parse_context_task(params.0.task.as_deref());
-        let mut result = tokio::task::spawn_blocking(move || engine.context(&symbol, budget, task))
-            .await
-            .map_err(|e| McpError::new(ErrorCode::INTERNAL_ERROR, e.to_string(), None))?
-            .map_err(Self::map_query_error)?;
-        result = apply_symbol_enrichment(&peer, &repo_root, result).await;
+        let options = becket_query::AssembleOptions { budget, task };
+        let mut result =
+            tokio::task::spawn_blocking(move || engine.context_with_options(&symbol, options))
+                .await
+                .map_err(|e| McpError::new(ErrorCode::INTERNAL_ERROR, e.to_string(), None))?
+                .map_err(Self::map_query_error)?;
+        if enrich {
+            result = apply_context_enrichment(&peer, &repo_root, result).await;
+        }
         Ok(CallToolResult::success(vec![Content::text(
             result.markdown,
         )]))
@@ -270,7 +282,7 @@ fn resolve_wiki_page(
 #[tool_handler(
     name = "becket-mcp",
     version = "0.2.0",
-    instructions = "Becket MCP server. Run `becket build` in the target repository first. Tools: get_context, get_wiki, get_impact, get_flow, get_dependencies. When the host supports MCP sampling, get_context, get_flow, and get_wiki (enrich=true) lazily enrich summaries via the host model and cache them locally."
+    instructions = "Becket MCP server. Run `becket build` in the target repository first. Tools: get_context, get_wiki, get_impact, get_flow, get_dependencies. get_context supports auto_budget (recommended token size), enrich (knowledge-page prose via sampling), and task modes fix/refactor/onboard."
 )]
 impl ServerHandler for BecketMcpServer {}
 

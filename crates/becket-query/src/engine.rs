@@ -5,7 +5,7 @@ use std::path::Path;
 use becket_schema::artifacts::SymbolRecord;
 use becket_store::{BecketPaths, IndexStore};
 
-use crate::assemble::assemble_context;
+use crate::assemble::{assemble_context, assemble_context_with_options};
 use crate::error::QueryError;
 use crate::types::{
     ContextResult, ContextTask, DependenciesResult, FlowResult, ImpactResult, SummarySource,
@@ -126,6 +126,9 @@ impl QueryEngine {
 
     /// Builds a context bundle with code snippets, impact, and markdown for LLM consumption.
     ///
+    /// Pass `budget: None` with [`assemble_context_with_options`] and `auto_budget` to use the
+    /// recommended token budget for the symbol and task.
+    ///
     /// # Errors
     ///
     /// Returns [`QueryError`] when the index is missing or symbol is unknown.
@@ -138,6 +141,17 @@ impl QueryEngine {
         let store = self.open_store()?;
         let root = self.resolve_symbol(&store, symbol)?;
         assemble_context(&store, &self.paths.root, root, budget, task)
+    }
+
+    /// Like [`Self::context`] but accepts full assembly options (e.g. auto budget).
+    pub fn context_with_options(
+        &self,
+        symbol: &str,
+        options: crate::AssembleOptions,
+    ) -> Result<ContextResult, QueryError> {
+        let store = self.open_store()?;
+        let root = self.resolve_symbol(&store, symbol)?;
+        assemble_context_with_options(&store, &self.paths.root, root, options)
     }
 
     /// Lists downstream dependencies for a symbol.

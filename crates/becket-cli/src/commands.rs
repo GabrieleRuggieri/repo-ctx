@@ -5,7 +5,7 @@ use becket_core::{
     wiki::{WikiCompiler, WikiLinter, WikiStore},
     BuildOptions, BuildPipeline, DomainEditor, WorkspacePipeline,
 };
-use becket_query::QueryEngine;
+use becket_query::{AssembleOptions, QueryEngine};
 use becket_schema::wiki::WikiStaleQueue;
 use becket_store::{BecketPaths, IndexStore};
 use serde::Serialize;
@@ -119,14 +119,27 @@ pub fn execute(cli: Cli) -> Result<()> {
         Commands::Context {
             symbol,
             budget,
+            auto_budget,
             task,
             json,
         } => {
             let engine = QueryEngine::new(&cli.repo);
-            let result = engine.context(&symbol, Some(budget), task.into())?;
+            let options = AssembleOptions {
+                budget: if auto_budget { None } else { Some(budget) },
+                task: task.into(),
+            };
+            let result = engine.context_with_options(&symbol, options)?;
             if json {
                 print_json(&result)?;
             } else {
+                if !result.budget_advice.within_budget {
+                    eprintln!(
+                        "hint: budget may be tight — used ~{} tokens, recommended ~{} for full context (try --auto-budget or --budget {})",
+                        result.budget_advice.estimated_tokens,
+                        result.budget_advice.recommended_tokens,
+                        result.budget_advice.recommended_tokens,
+                    );
+                }
                 println!("{}", result.markdown);
             }
         }

@@ -13,6 +13,28 @@ pub enum SummarySource {
     McpSampling,
 }
 
+/// Token budget guidance after context assembly.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BudgetAdvice {
+    /// Budget requested by the caller (or default).
+    pub requested_budget: u32,
+    /// Estimated budget to include the full bundle for this task without truncation.
+    pub recommended_tokens: u32,
+    /// Estimated tokens in the assembled markdown output.
+    pub estimated_tokens: u32,
+    /// Snippets included in the bundle.
+    pub snippets_included: usize,
+    /// Snippets omitted due to budget or task limits.
+    pub snippets_omitted: usize,
+    /// Impact entries shown in markdown.
+    pub impact_entries_shown: usize,
+    /// Total downstream symbols within task impact depth.
+    pub impact_entries_total: usize,
+    /// True when nothing was truncated for the requested budget.
+    pub within_budget: bool,
+}
+
 /// Task mode for context assembly ranking.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
@@ -120,11 +142,19 @@ pub struct ContextResult {
     /// Wiki markdown body (without frontmatter) when available.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wiki_body: Option<String>,
+    /// Flow knowledge page id (onboard task).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub flow_wiki_page_id: Option<String>,
+    /// Flow knowledge markdown body (onboard task).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub flow_wiki_body: Option<String>,
+    /// Token budget guidance for this symbol and task.
+    pub budget_advice: BudgetAdvice,
     /// Agent-ready markdown bundle (one file).
     pub markdown: String,
     /// Task mode used for assembly.
     pub task: ContextTask,
-    /// Token budget used for snippet packing.
+    /// Token budget used for packing.
     pub budget_tokens: u32,
 }
 

@@ -3,7 +3,11 @@
 use std::path::Path;
 
 use becket_core::redact_secrets;
-use becket_core::wiki::{replace_prose_slot, WikiStore, PROSE_SLOT};
+use becket_core::wiki::{
+    extract_prose_content, replace_prose_slot, sanitize_for_context, wiki_adds_context, WikiStore,
+    PROSE_SLOT,
+};
+use becket_query::assemble::refresh_context_markdown;
 use becket_query::types::{ContextResult, FlowResult, SummarySource};
 use becket_schema::artifacts::FlowRecord;
 use becket_store::{BecketPaths, EnrichmentRecord, IndexStore};
@@ -13,7 +17,6 @@ use rmcp::{
 };
 use tracing::debug;
 
-const ENTITY_SYMBOL: &str = "symbol";
 const ENTITY_FLOW: &str = "flow";
 const ENTITY_WIKI: &str = "wiki";
 const SOURCE_SAMPLING: &str = "mcp_sampling";
@@ -33,29 +36,6 @@ pub fn client_supports_sampling(peer: &Peer<RoleServer>) -> bool {
         return true;
     }
     caps.sampling.is_some()
-}
-
-/// Loads a cached enrichment or requests one from the host via MCP sampling.
-pub async fn enrich_symbol_context(
-    peer: &Peer<RoleServer>,
-    repo_root: &Path,
-    context: &ContextResult,
-) -> Option<String> {
-    if !client_supports_sampling(peer) {
-        return None;
-    }
-
-    let paths = BecketPaths::new(repo_root);
-    let symbol_id = context.symbol.id.clone();
-
-    if let Some(cached) = load_cached(ENTITY_SYMBOL, &symbol_id, &paths.index_db) {
-        return Some(cached);
-    }
-
-    let prompt = build_symbol_prompt(context);
-    let summary = request_summary(peer, &prompt).await?;
-    cache_enrichment(ENTITY_SYMBOL, &symbol_id, &summary, &paths.index_db);
-    Some(summary)
 }
 
 /// Loads or generates an enriched flow description.
@@ -81,18 +61,40 @@ pub async fn enrich_flow_description(
     Some(summary)
 }
 
-/// Applies cached or freshly sampled enrichment to a context result.
-pub async fn apply_symbol_enrichment(
+/// Applies cached or freshly sampled wiki prose enrichment to a context bundle.
+pub async fn apply_context_enrichment(
     peer: &Peer<RoleServer>,
     repo_root: &Path,
     mut context: ContextResult,
 ) -> ContextResult {
-    if let Some(summary) = enrich_symbol_context(peer, repo_root, &context).await {
-        context.enriched_summary = Some(summary.clone());
-        context.summary_source = SummarySource::McpSampling;
-        context.markdown.push_str("\n\n## Enriched summary\n\n");
-        context.markdown.push_str(&summary);
+    let paths = BecketPaths::new(repo_root);
+    let wiki_store = WikiStore::new(&paths);
+
+    if let Some(page_id) = context.wiki_page_id.clone() {
+        if let Ok(Some(page)) = wiki_store.load_page(&page_id) {
+            let enriched = enrich_wiki_prose(peer, repo_root, page).await;
+            let sanitized = sanitize_for_context(&enriched.body);
+            if wiki_adds_context(&sanitized) {
+                context.wiki_body = Some(sanitized);
+                context.enriched_summary = extract_prose_content(&enriched.body);
+                context.summary_source = SummarySource::McpSampling;
+            }
+        }
     }
+
+    if matches!(context.task, becket_query::ContextTask::Onboard) {
+        if let Some(flow_id) = context.flow_wiki_page_id.clone() {
+            if let Ok(Some(page)) = wiki_store.load_page(&flow_id) {
+                let enriched = enrich_wiki_prose(peer, repo_root, page).await;
+                let sanitized = sanitize_for_context(&enriched.body);
+                if wiki_adds_context(&sanitized) {
+                    context.flow_wiki_body = Some(sanitized);
+                }
+            }
+        }
+    }
+
+    context.markdown = refresh_context_markdown(&context);
     context
 }
 
@@ -178,25 +180,6 @@ fn cache_enrichment(entity_kind: &str, entity_id: &str, summary: &str, db_path: 
     }
 }
 
-fn build_symbol_prompt(context: &ContextResult) -> String {
-    let facts = format!(
-        "name: {}\nkind: {:?}\nfile: {}\nlines: {}-{}\ndeterministic_summary: {}\nrelated: {}\ninvariants: {}",
-        context.symbol.name,
-        context.symbol.kind,
-        context.symbol.file_path,
-        context.symbol.start_line,
-        context.symbol.end_line,
-        context.responsibility,
-        context.related_components.join(", "),
-        context.invariants.join(", "),
-    );
-    let redacted = redact_secrets(&facts);
-    format!(
-        "Summarize this code symbol in 1-2 concise sentences for an AI coding agent. \
-Use ONLY the facts below. Do not invent behavior.\n\n{redacted}"
-    )
-}
-
 fn build_flow_prompt(flow: &FlowRecord) -> String {
     let steps: Vec<String> = flow
         .steps
@@ -241,53 +224,7 @@ fn extract_sampling_text(result: &CreateMessageResult) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use becket_query::types::{CodeSnippet, ContextTask};
-    use becket_schema::artifacts::{FlowRecord, FlowStepRecord, SymbolRecord};
-    use becket_schema::symbol::{SymbolKind, Visibility};
-
-    #[test]
-    fn build_symbol_prompt_includes_redacted_facts() {
-        let context = ContextResult {
-            symbol: SymbolRecord {
-                id: "sym1".into(),
-                kind: SymbolKind::Function,
-                name: "pay".into(),
-                fqn: "pay".into(),
-                file_path: "src/payment.rs".into(),
-                start_line: 1,
-                end_line: 5,
-                visibility: Visibility::Public,
-                module_id: None,
-            },
-            responsibility: "pay function".into(),
-            enriched_summary: None,
-            summary_source: SummarySource::Deterministic,
-            related_components: vec!["Charge".into()],
-            external_dependencies: vec!["src".into()],
-            invariants: vec!["visibility: Public".into()],
-            semantic_neighbors: vec![],
-            snippets: vec![CodeSnippet {
-                symbol_id: "sym1".into(),
-                symbol_name: "pay".into(),
-                file_path: "src/payment.rs".into(),
-                start_line: 1,
-                end_line: 5,
-                language: "rust".into(),
-                content: "fn pay() {}".into(),
-            }],
-            callers: vec![],
-            callees: vec![],
-            affected_symbol_ids: vec![],
-            wiki_page_id: None,
-            wiki_body: None,
-            markdown: "# Context: pay".into(),
-            task: ContextTask::Fix,
-            budget_tokens: 6000,
-        };
-        let prompt = build_symbol_prompt(&context);
-        assert!(prompt.contains("pay"));
-        assert!(prompt.contains("Charge"));
-    }
+    use becket_schema::artifacts::{FlowRecord, FlowStepRecord};
 
     #[test]
     fn build_flow_prompt_lists_steps() {

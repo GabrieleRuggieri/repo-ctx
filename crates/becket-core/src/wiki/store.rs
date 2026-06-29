@@ -165,6 +165,32 @@ pub fn find_page_for_symbol(
     Ok(best.map(|(_, p)| p))
 }
 
+/// Finds a flow wiki page that includes `symbol_id` in its anchored steps.
+pub fn find_flow_page_for_symbol(
+    store: &WikiStore,
+    symbol_id: &str,
+) -> Result<Option<WikiPage>, CoreError> {
+    use becket_schema::wiki::WikiPageKind;
+
+    let mut best: Option<(usize, WikiPage)> = None;
+    for id in store.list_page_ids()? {
+        let page = store
+            .load_page(&id)?
+            .ok_or_else(|| CoreError::Wiki(format!("missing page {id}")))?;
+        if page.meta.kind != WikiPageKind::Flow {
+            continue;
+        }
+        if !page.meta.symbol_ids.iter().any(|s| s == symbol_id) {
+            continue;
+        }
+        let steps = page.meta.symbol_ids.len();
+        if best.as_ref().map_or(true, |(n, _)| steps < *n) {
+            best = Some((steps, page));
+        }
+    }
+    Ok(best.map(|(_, p)| p))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
