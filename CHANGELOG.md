@@ -4,6 +4,31 @@ All notable changes to Becket are documented here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-06-29
+
+### Added
+
+- **`becket context --plan`** — fast token budget estimate without reading source files
+- **`becket context --auto-budget`** — recommended budget from graph size and task
+- **Task default budgets** — `fix` 6k, `refactor` 12k, `onboard` 8k tokens when `--budget` is omitted
+- **Fix mode test awareness** — test snippets ranked first; `## Related tests` in markdown bundles
+- **`WikiPageIndex`** and assemble-time file cache for faster context builds
+- **MCP auto-enrich** — `get_context` enriches placeholder knowledge pages via host sampling
+- **Onboard task** — attaches the relevant flow wiki page to context bundles
+
+### Changed
+
+- Context bundles use **`## Knowledge`** (wiki pages) instead of a separate enriched summary section
+- Smart **budget advice** notice in markdown when packing hits token limits
+- Website docs (EN/IT): `--plan`, `--auto-budget`, task budgets, knowledge layer, and agent setup
+- Website: broader agent messaging, demo folder, dark-only UI, clarified `npx becket` vs `becket-mcp`
+
+### Fixed
+
+- CI: latency budget guards stabilized on shared runners; skipped on Windows tier-2
+- CI: schema drift test independent of Windows line endings
+- Website: i18n hint translation and language toggle label
+
 ## [0.2.2] - 2026-06-26
 
 ### Changed
@@ -53,6 +78,7 @@ All notable changes to Becket are documented here. The format follows [Keep a Ch
 - Local SQLite index and versioned JSON artifacts under `.becket/`
 - tree-sitter parsing for Rust, TypeScript/JavaScript, Python, Go, Java
 
+[0.2.3]: https://github.com/GabrieleRuggieri/becket/releases/tag/v0.2.3
 [0.2.2]: https://github.com/GabrieleRuggieri/becket/releases/tag/v0.2.2
 [0.2.1]: https://github.com/GabrieleRuggieri/becket/releases/tag/v0.2.1
 [0.2.0]: https://github.com/GabrieleRuggieri/becket/releases/tag/v0.2.0
