@@ -214,9 +214,11 @@ Output:
 ### Generate AI-ready context
 
 ```bash
-becket context PaymentService --budget 6000 --task fix
-becket context PaymentService --auto-budget --task fix   # recommended size for this symbol
-becket context PaymentService --json   # structured output for tooling
+becket context PaymentService --task fix              # default budget 6000 for fix
+becket context PaymentService --task refactor         # default 12000
+becket context PaymentService --auto-budget --task fix  # recommended size
+becket context PaymentService --plan --task fix         # fast budget estimate only
+becket context PaymentService --json
 ```
 
 One markdown bundle within the token budget (wiki/knowledge, impact, and snippets all count toward it):

@@ -98,6 +98,15 @@ pub fn pack_impact_count(line_tokens: &[u32], remaining: u32, cap: usize) -> usi
     count
 }
 
+/// Snippet/impact counts after packing (input to budget advice).
+#[derive(Debug, Clone, Copy)]
+pub struct PackingStats {
+    pub snippets_included: usize,
+    pub snippets_total: usize,
+    pub impact_shown: usize,
+    pub impact_total: usize,
+}
+
 /// Builds budget advice after packing.
 #[must_use]
 pub fn build_advice(
@@ -105,22 +114,21 @@ pub fn build_advice(
     requested_budget: u32,
     recommended_tokens: u32,
     estimated_tokens: u32,
-    snippets_included: usize,
-    snippets_total: usize,
-    impact_shown: usize,
-    impact_total: usize,
+    packing: PackingStats,
 ) -> BudgetAdvice {
     let impact_cap = impact_display_cap(task);
-    let truncated =
-        snippets_included < snippets_total || impact_shown < impact_total.min(impact_cap);
+    let truncated = packing.snippets_included < packing.snippets_total
+        || packing.impact_shown < packing.impact_total.min(impact_cap);
     BudgetAdvice {
         requested_budget,
         recommended_tokens,
         estimated_tokens,
-        snippets_included,
-        snippets_omitted: snippets_total.saturating_sub(snippets_included),
-        impact_entries_shown: impact_shown,
-        impact_entries_total: impact_total,
+        snippets_included: packing.snippets_included,
+        snippets_omitted: packing
+            .snippets_total
+            .saturating_sub(packing.snippets_included),
+        impact_entries_shown: packing.impact_shown,
+        impact_entries_total: packing.impact_total,
         within_budget: !truncated && requested_budget >= recommended_tokens,
     }
 }

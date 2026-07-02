@@ -161,13 +161,13 @@
           <p data-i18n="docs.demo.desc">The repository includes a <code>demo/</code> folder — a mini shop with payment, order, and shipping flows. Use it to try Becket without touching your own codebase.</p>
 
           <div class="code-block glass-card">
-            <div class="code-header"><span>terminal</span><button class="copy-btn" data-copy="cd demo&#10;npx becket build&#10;becket context capture --budget 6000 --task fix">Copy</button></div>
+            <div class="code-header"><span>terminal</span><button class="copy-btn" data-copy="cd demo&#10;npx becket build&#10;becket context capture --task fix">Copy</button></div>
             <pre><code>cd demo
 npx becket build
-becket context capture --budget 6000 --task fix</code></pre>
+becket context capture --task fix</code></pre>
           </div>
 
-          <p data-i18n="docs.demo.outputDesc">Example output (truncated) — a markdown bundle with wiki, real snippets, and impact:</p>
+          <p data-i18n="docs.demo.outputDesc">Example output (truncated) — a markdown bundle with knowledge pages, real snippets, and impact:</p>
           <div class="code-block glass-card example-output">
             <pre><code># Context: capture
 
@@ -176,22 +176,18 @@ becket context capture --budget 6000 --task fix</code></pre>
 ## Symbol
 capture (Function) — src/services/payments.rs
 
-## Wiki
-_Grounded page: wiki_flow_services_
-Execution path: run_billing → invoice → capture → place → …
+## Knowledge
+_Grounded markdown: `wiki_flow_payment`_
+Execution path: checkout → charge_card → capture → …
+
+## Related tests
+- `tests/payment/capture_test.rs`
 
 ## Code
 
 ```rust
 pub fn capture() {
     super::orders::place();
-}
-```
-
-### invoice (`src/services/billing.rs`)
-```rust
-pub fn invoice() {
-    super::payments::capture();
 }
 ```
 …</code></pre>
@@ -315,12 +311,52 @@ becket build --watch    # incremental rebuild on file changes</code></pre>
 
           <h3 data-i18n="docs.cli.context.title">Context bundle</h3>
           <div class="code-block glass-card">
-            <div class="code-header"><span>terminal</span><button class="copy-btn" data-copy="becket context PaymentService --format md --budget 6000 --task fix">Copy</button></div>
-            <pre><code>becket context capture --budget 6000 --task fix
+            <div class="code-header"><span>terminal</span><button class="copy-btn" data-copy="becket context capture --task fix&#10;becket context capture --task refactor&#10;becket context capture --task onboard&#10;becket context capture --auto-budget --task fix&#10;becket context capture --plan --task fix&#10;becket context capture --json">Copy</button></div>
+            <pre><code>becket context capture --task fix
 becket context capture --task refactor
-becket context capture --task onboard --json</code></pre>
+becket context capture --task onboard
+becket context capture --auto-budget --task fix
+becket context capture --plan --task fix
+becket context capture --json</code></pre>
           </div>
-          <p data-i18n="docs.cli.context.desc">Task modes: <code>fix</code> (default, more snippets), <code>refactor</code> (wider impact), <code>onboard</code> (overview, fewer snippets).</p>
+          <p data-i18n="docs.cli.context.desc"></p>
+          <ul class="check-list docs-check">
+            <li data-i18n-html="docs.cli.context.li1"></li>
+            <li data-i18n-html="docs.cli.context.li2"></li>
+            <li data-i18n-html="docs.cli.context.li3"></li>
+            <li data-i18n-html="docs.cli.context.li4"></li>
+          </ul>
+
+          <h3 data-i18n="docs.cli.budget.title">Token budget</h3>
+          <p data-i18n="docs.cli.budget.desc"></p>
+          <div class="table-wrap glass-card">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="docs.cli.budget.th.task">Task</th>
+                  <th data-i18n="docs.cli.budget.th.default">Default budget</th>
+                  <th data-i18n="docs.cli.budget.th.focus">Focus</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>fix</code></td>
+                  <td>6,000</td>
+                  <td data-i18n="docs.cli.budget.fix">Callers, test snippets, shallow impact</td>
+                </tr>
+                <tr>
+                  <td><code>refactor</code></td>
+                  <td>12,000</td>
+                  <td data-i18n="docs.cli.budget.refactor">Deep impact, more snippets</td>
+                </tr>
+                <tr>
+                  <td><code>onboard</code></td>
+                  <td>8,000</td>
+                  <td data-i18n="docs.cli.budget.onboard">Flow overview + fewer snippets</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
           <h3 data-i18n="docs.cli.impact.title">Query impact</h3>
           <div class="code-block glass-card">
@@ -367,9 +403,10 @@ becket domain add payment src/billing/** capture</code></pre>
           <p data-i18n="docs.wiki.lintCi"><code>wiki lint --strict</code> in CI is an optional edge case for teams that version wiki pages in git. For the usual workflow — local <code>.becket/</code>, agent via MCP, no commit — you do not need wiki lint.</p>
 
           <ul class="check-list docs-check">
-            <li data-i18n="docs.wiki.li1">Pages authored lazily via MCP sampling (host model, no bundled LLM)</li>
+            <li data-i18n="docs.wiki.li1">Structure compiled from the graph at <code>becket build</code> — files live in <code>.becket/wiki/*.md</code></li>
             <li data-i18n="docs.wiki.li2">MCP <code>get_wiki</code> with <code>enrich=true</code> fills intent/gotchas and persists to disk</li>
-            <li data-i18n="docs.wiki.li3"><code>index.md</code> routes agents to relevant pages first</li>
+            <li data-i18n="docs.wiki.li3"><code>get_context</code> auto-enriches empty prose slots when MCP sampling is available</li>
+            <li data-i18n="docs.wiki.li4"><code>index.md</code> routes agents to relevant pages first</li>
           </ul>
         </section>
 

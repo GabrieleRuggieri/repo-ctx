@@ -5,7 +5,7 @@ use becket_core::{
     wiki::{WikiCompiler, WikiLinter, WikiStore},
     BuildOptions, BuildPipeline, DomainEditor, WorkspacePipeline,
 };
-use becket_query::{AssembleOptions, QueryEngine};
+use becket_query::{AssembleOptions, ContextTask, QueryEngine};
 use becket_schema::wiki::WikiStaleQueue;
 use becket_store::{BecketPaths, IndexStore};
 use serde::Serialize;
@@ -120,21 +120,29 @@ pub fn execute(cli: Cli) -> Result<()> {
             symbol,
             budget,
             auto_budget,
+            plan,
             task,
             json,
         } => {
             let engine = QueryEngine::new(&cli.repo);
+            let task_mode: ContextTask = task.into();
+            let resolved_budget = if auto_budget {
+                None
+            } else {
+                Some(budget.unwrap_or_else(|| task_mode.default_budget()))
+            };
             let options = AssembleOptions {
-                budget: if auto_budget { None } else { Some(budget) },
-                task: task.into(),
+                budget: resolved_budget,
+                task: task_mode,
+                plan_only: plan,
             };
             let result = engine.context_with_options(&symbol, options)?;
             if json {
                 print_json(&result)?;
             } else {
-                if !result.budget_advice.within_budget {
+                if !plan && !result.budget_advice.within_budget {
                     eprintln!(
-                        "hint: budget may be tight — used ~{} tokens, recommended ~{} for full context (try --auto-budget or --budget {})",
+                        "hint: budget may be tight — used ~{} tokens, recommended ~{} (try --auto-budget or --budget {})",
                         result.budget_advice.estimated_tokens,
                         result.budget_advice.recommended_tokens,
                         result.budget_advice.recommended_tokens,

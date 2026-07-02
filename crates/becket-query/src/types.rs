@@ -49,6 +49,16 @@ pub enum ContextTask {
 }
 
 impl ContextTask {
+    /// Default token budget for this task mode.
+    #[must_use]
+    pub const fn default_budget(self) -> u32 {
+        match self {
+            Self::Fix => 6_000,
+            Self::Refactor => 12_000,
+            Self::Onboard => 8_000,
+        }
+    }
+
     /// Downstream impact traversal depth for this task.
     #[must_use]
     pub const fn impact_depth(self) -> u32 {
@@ -134,6 +144,9 @@ pub struct ContextResult {
     pub callers: Vec<String>,
     /// Direct callee symbol names.
     pub callees: Vec<String>,
+    /// Test file paths relevant to this symbol (fix task heuristic).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub related_tests: Vec<String>,
     /// Downstream symbol ids within the task impact depth.
     pub affected_symbol_ids: Vec<String>,
     /// Grounded wiki page id when anchored to this symbol.

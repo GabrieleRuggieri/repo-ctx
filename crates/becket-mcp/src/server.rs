@@ -40,7 +40,7 @@ pub struct GetContextParams {
     pub auto_budget: bool,
     /// Task mode: fix, refactor, or onboard.
     pub task: Option<String>,
-    /// Enrich knowledge-page prose via MCP sampling when supported.
+    /// Enrich knowledge-page prose via MCP sampling when supported (also auto when placeholder).
     #[serde(default)]
     pub enrich: bool,
 }
@@ -94,6 +94,10 @@ fn parse_context_task(raw: Option<&str>) -> ContextTask {
     }
 }
 
+fn should_auto_enrich_context(result: &becket_query::ContextResult) -> bool {
+    result.wiki_page_id.is_some() && result.enriched_summary.is_none()
+}
+
 impl BecketMcpServer {
     /// Creates a server bound to the repository at `repo_root`.
     pub fn new(repo_root: PathBuf) -> Self {
@@ -138,16 +142,24 @@ impl BecketMcpServer {
         let repo_root = self.repo_root.as_path().to_path_buf();
         let symbol = params.0.symbol;
         let auto_budget = params.0.auto_budget;
-        let budget = if auto_budget { None } else { params.0.budget };
-        let enrich = params.0.enrich;
         let task = parse_context_task(params.0.task.as_deref());
-        let options = becket_query::AssembleOptions { budget, task };
+        let budget = if auto_budget {
+            None
+        } else {
+            Some(params.0.budget.unwrap_or_else(|| task.default_budget()))
+        };
+        let enrich = params.0.enrich;
+        let options = becket_query::AssembleOptions {
+            budget,
+            task,
+            plan_only: false,
+        };
         let mut result =
             tokio::task::spawn_blocking(move || engine.context_with_options(&symbol, options))
                 .await
                 .map_err(|e| McpError::new(ErrorCode::INTERNAL_ERROR, e.to_string(), None))?
                 .map_err(Self::map_query_error)?;
-        if enrich {
+        if enrich || should_auto_enrich_context(&result) {
             result = apply_context_enrichment(&peer, &repo_root, result).await;
         }
         Ok(CallToolResult::success(vec![Content::text(

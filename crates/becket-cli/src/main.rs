@@ -66,12 +66,15 @@ enum Commands {
     Context {
         /// Symbol name or FQN.
         symbol: String,
-        /// Approximate token budget for packing (wiki, impact, and snippets).
-        #[arg(long, default_value_t = 6000)]
-        budget: u32,
-        /// Use the recommended budget for this symbol and task instead of `--budget`.
+        /// Token budget (default: task-specific — fix 6000, refactor 12000, onboard 8000).
+        #[arg(long)]
+        budget: Option<u32>,
+        /// Use the recommended budget for this symbol and task.
         #[arg(long)]
         auto_budget: bool,
+        /// Show budget guidance only (fast; no source snippets).
+        #[arg(long)]
+        plan: bool,
         /// Task mode: fix, refactor, or onboard.
         #[arg(long, value_enum, default_value_t = TaskArg::Fix)]
         task: TaskArg,

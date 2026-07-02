@@ -62,6 +62,11 @@ pub fn merge_preserved_prose(existing: &str, compiled: &str) -> String {
     replace_prose_slot(compiled, &existing_prose)
 }
 
+/// Returns true when the prose slot still needs MCP enrichment.
+pub fn needs_prose_enrichment(body: &str) -> bool {
+    extract_prose_content(body).is_none()
+}
+
 /// Extracts user- or MCP-authored prose from a page body.
 pub fn extract_prose_content(body: &str) -> Option<String> {
     let idx = body.find(PROSE_SLOT)?;
@@ -161,6 +166,14 @@ mod tests {
         let merged = merge_preserved_prose(&existing, &compiled);
         assert!(merged.contains("Custom team notes"));
         assert!(!merged.contains(PROSE_PLACEHOLDER));
+    }
+
+    #[test]
+    fn needs_prose_when_placeholder_only() {
+        let body = prose_slot();
+        assert!(needs_prose_enrichment(&body));
+        let enriched = format!("{PROSE_SLOT}\nTeam notes about retries.\n");
+        assert!(!needs_prose_enrichment(&enriched));
     }
 
     #[test]

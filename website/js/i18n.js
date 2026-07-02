@@ -163,7 +163,7 @@ const translations = {
     "docs.demo.title": "Demo walkthrough",
     "docs.demo.desc":
       "The repository includes a demo/ folder — a mini shop with payment, order, and shipping flows. Use it to try Becket without touching your own codebase.",
-    "docs.demo.outputDesc": "Example output (truncated) — a markdown bundle with wiki, real snippets, and impact:",
+    "docs.demo.outputDesc": "Example output (truncated) — a markdown bundle with knowledge pages, real snippets, and impact:",
     "docs.demo.readme":
       'Full commands: see <a href="https://github.com/GabrieleRuggieri/becket/tree/main/demo">demo/README.md</a> in the repository.',
     "docs.audience.title": "Who it's for",
@@ -199,12 +199,29 @@ const translations = {
     "docs.cli.flow.desc": "Shows end-to-end execution path and service interactions.",
     "docs.cli.context.title": "Context bundle",
     "docs.cli.context.desc":
-      "Task modes: fix (default, more snippets), refactor (wider impact), onboard (overview, fewer snippets).",
+      "One markdown file per query: grounded knowledge pages, real code snippets sliced from disk, call graph, and impact — packed to a token budget. Knowledge, impact, and snippets all count toward the budget.",
+    "docs.cli.context.li1":
+      "<strong>fix</strong> (default) — prioritizes related test files and callers; default budget 6,000 tokens",
+    "docs.cli.context.li2":
+      "<strong>refactor</strong> — deeper impact traversal; default budget 12,000 tokens",
+    "docs.cli.context.li3":
+      "<strong>onboard</strong> — adds a flow overview page and fewer snippets; default budget 8,000 tokens",
+    "docs.cli.context.li4":
+      "Use <code>--json</code> for <code>budgetAdvice</code> (recommended vs used tokens) in tooling",
+    "docs.cli.budget.title": "Token budget",
+    "docs.cli.budget.desc":
+      "Pick a task and Becket applies a sensible default budget. Override with --budget N, use --auto-budget for the recommended size for this symbol, or --plan for a fast estimate without reading source files. If the budget is too small, the bundle includes a notice with the recommended value.",
+    "docs.cli.budget.th.task": "Task",
+    "docs.cli.budget.th.default": "Default budget",
+    "docs.cli.budget.th.focus": "Focus",
+    "docs.cli.budget.fix": "Callers, test snippets, shallow impact",
+    "docs.cli.budget.refactor": "Deep impact, more snippets",
+    "docs.cli.budget.onboard": "Flow overview + fewer snippets",
     "docs.cli.domain.title": "Domain refinement (optional)",
     "docs.cli.domain.desc": "Zero-config by default. Refine auto-discovered domains via CLI.",
     "docs.wiki.title": "Grounded Repo Wiki",
     "docs.wiki.desc":
-      "Markdown pages for modules, services, and flows — each anchored to real symbol IDs from the deterministic graph. Structure is compiled from the graph; optional prose (intent and gotchas) via MCP sampling.",
+      "Markdown files in .becket/wiki/ — one page per module, service, or flow, each anchored to real symbol IDs from the deterministic graph. Structure is compiled from the graph; optional prose (intent and gotchas) via MCP sampling.",
     "docs.wiki.lintTitle": "What does <code>wiki lint</code> do?",
     "docs.wiki.lintDesc": "Wiki lint compares every wiki page against the live call graph — the graph is always ground truth. It reports:",
     "docs.wiki.liStale": "<strong>Stale pages</strong> — anchored code changed since the page was written (<code>graph_fingerprint</code> mismatch)",
@@ -213,9 +230,10 @@ const translations = {
     "docs.wiki.liOrphans": "<strong>Orphan pages</strong> — pages not reachable from <code>index.md</code>",
     "docs.wiki.lintCi":
       "wiki lint --strict in CI is an optional edge case for teams that version wiki pages in git. For the usual workflow — local .becket/, agent via MCP, no commit — you do not need wiki lint.",
-    "docs.wiki.li1": "Pages authored lazily via MCP sampling (host model, no bundled LLM)",
+    "docs.wiki.li1": "Structure compiled from the graph at becket build — files live in .becket/wiki/*.md",
     "docs.wiki.li2": "MCP get_wiki with enrich=true fills intent/gotchas and persists to disk",
-    "docs.wiki.li3": "index.md routes agents to relevant pages first",
+    "docs.wiki.li3": "get_context auto-enriches empty prose slots when MCP sampling is available",
+    "docs.wiki.li4": "index.md routes agents to relevant pages first",
     "docs.languages.title": "Supported languages",
     "docs.languages.desc": "Becket parses source with tree-sitter. Built-in support today:",
     "docs.languages.note":
@@ -226,8 +244,8 @@ const translations = {
     "docs.mcp.th.tool": "Tool",
     "docs.mcp.th.desc": "Description",
     "docs.mcp.th.when": "When to use",
-    "docs.mcp.t1": "Wiki + code snippets + impact, packed to budget",
-    "docs.mcp.t1w": "Before fixing or refactoring a symbol",
+    "docs.mcp.t1": "Knowledge pages + code snippets + impact, packed to budget",
+    "docs.mcp.t1w": "Before fixing or refactoring a symbol; supports auto_budget and auto enrich",
     "docs.mcp.t2": "Change impact analysis",
     "docs.mcp.t2w": "Before renaming or deleting a symbol",
     "docs.mcp.t3": "Business flow reconstruction",
@@ -492,7 +510,7 @@ const translations = {
     "docs.demo.title": "Walkthrough demo",
     "docs.demo.desc":
       "Il repository include una cartella demo/ — un mini shop con flussi payment, order e shipping. Usala per provare Becket senza toccare la tua codebase.",
-    "docs.demo.outputDesc": "Output di esempio (troncato) — un bundle markdown con wiki, snippet reali e impact:",
+    "docs.demo.outputDesc": "Output di esempio (troncato) — un bundle markdown con pagine knowledge, snippet reali e impact:",
     "docs.demo.readme":
       'Comandi completi: vedi <a href="https://github.com/GabrieleRuggieri/becket/tree/main/demo">demo/README.md</a> nel repository.',
     "docs.audience.title": "Per chi è",
@@ -527,12 +545,29 @@ const translations = {
     "docs.cli.flow.desc": "Mostra il percorso end-to-end e le interazioni tra servizi.",
     "docs.cli.context.title": "Context bundle",
     "docs.cli.context.desc":
-      "Modalità task: fix (default, più snippet), refactor (impact più ampio), onboard (panoramica, meno snippet).",
+      "Un file markdown per query: pagine di conoscenza ancorate, snippet reali dal disco, call graph e impact — nel budget token. Knowledge, impact e snippet contano tutti verso il budget.",
+    "docs.cli.context.li1":
+      "<strong>fix</strong> (default) — priorità ai file test correlati e ai caller; budget default 6.000 token",
+    "docs.cli.context.li2":
+      "<strong>refactor</strong> — impact più profondo; budget default 12.000 token",
+    "docs.cli.context.li3":
+      "<strong>onboard</strong> — aggiunge la pagina flow overview e meno snippet; budget default 8.000 token",
+    "docs.cli.context.li4":
+      "Usa <code>--json</code> per <code>budgetAdvice</code> (token consigliati vs usati) nei tool",
+    "docs.cli.budget.title": "Budget token",
+    "docs.cli.budget.desc":
+      "Scegli un task e Becket applica un budget di default sensato. Sovrascrivi con --budget N, usa --auto-budget per la dimensione consigliata su quel simbolo, o --plan per una stima veloce senza leggere i sorgenti. Se il budget è troppo basso, il bundle include un avviso con il valore consigliato.",
+    "docs.cli.budget.th.task": "Task",
+    "docs.cli.budget.th.default": "Budget default",
+    "docs.cli.budget.th.focus": "Focus",
+    "docs.cli.budget.fix": "Caller, snippet da test, impact superficiale",
+    "docs.cli.budget.refactor": "Impact profondo, più snippet",
+    "docs.cli.budget.onboard": "Flow overview + meno snippet",
     "docs.cli.domain.title": "Raffinamento domini (opzionale)",
     "docs.cli.domain.desc": "Zero-config di default. Affina i domini auto-scoperti via CLI.",
     "docs.wiki.title": "Repo Wiki ancorata",
     "docs.wiki.desc":
-      "Pagine markdown per moduli, servizi e flussi — ciascuna ancorata a symbol ID reali dal grafo deterministico. La struttura è compilata dal grafo; prosa opzionale (intent e gotcha) via MCP sampling.",
+      "File markdown in .becket/wiki/ — una pagina per modulo, servizio o flow, ciascuna ancorata a symbol ID reali dal grafo deterministico. La struttura è compilata dal grafo; prosa opzionale (intent e gotcha) via MCP sampling.",
     "docs.wiki.lintTitle": "Cosa fa <code>wiki lint</code>?",
     "docs.wiki.lintDesc": "Wiki lint confronta ogni pagina wiki con il call graph live — il grafo è sempre ground truth. Segnala:",
     "docs.wiki.liStale": "<strong>Pagine stale</strong> — il codice ancorato è cambiato (<code>graph_fingerprint</code> mismatch)",
@@ -541,9 +576,10 @@ const translations = {
     "docs.wiki.liOrphans": "<strong>Pagine orfane</strong> — non raggiungibili da <code>index.md</code>",
     "docs.wiki.lintCi":
       "wiki lint --strict in CI è un edge case opzionale per team che versionano le pagine wiki in git. Nel workflow usuale — .becket/ locale, agente via MCP, niente commit — non ti serve wiki lint.",
-    "docs.wiki.li1": "Pagine via MCP sampling (modello host, nessun LLM bundled)",
+    "docs.wiki.li1": "Struttura compilata dal grafo a becket build — i file sono in .becket/wiki/*.md",
     "docs.wiki.li2": "MCP get_wiki con enrich=true compila intent/gotcha e persiste su disco",
-    "docs.wiki.li3": "index.md instrada gli agenti alle pagine rilevanti",
+    "docs.wiki.li3": "get_context arricchisce automaticamente gli slot prosa vuoti se MCP sampling è disponibile",
+    "docs.wiki.li4": "index.md instrada gli agenti alle pagine rilevanti",
     "docs.languages.title": "Linguaggi supportati",
     "docs.languages.desc": "Becket analizza il sorgente con tree-sitter. Supporto built-in oggi:",
     "docs.languages.note":
@@ -554,8 +590,8 @@ const translations = {
     "docs.mcp.th.tool": "Tool",
     "docs.mcp.th.desc": "Descrizione",
     "docs.mcp.th.when": "Quando usarlo",
-    "docs.mcp.t1": "Wiki + snippet + impact, nel budget",
-    "docs.mcp.t1w": "Prima di fix o refactor su un simbolo",
+    "docs.mcp.t1": "Pagine knowledge + snippet + impact, nel budget",
+    "docs.mcp.t1w": "Prima di fix o refactor; supporta auto_budget e arricchimento automatico",
     "docs.mcp.t2": "Analisi d'impatto",
     "docs.mcp.t2w": "Prima di rinominare o eliminare un simbolo",
     "docs.mcp.t3": "Ricostruzione flussi di business",
@@ -664,10 +700,10 @@ const typingLines = {
     "✓ Wiki: 4 pages grounded",
     "✓ Flows: services, api",
     "",
-    "$ becket context capture --budget 6000",
-    "→ wiki page + 3 code snippets",
+    "$ becket context capture --task fix",
+    "→ knowledge page + test snippets",
     "→ 5 modules in impact set",
-    "→ ready for AI agent ✓",
+    "→ budget: 6k recommended ✓",
   ],
   it: [
     "$ cd demo && npx becket build",
@@ -675,10 +711,10 @@ const typingLines = {
     "✓ Wiki: 4 pagine ancorate",
     "✓ Flussi: services, api",
     "",
-    "$ becket context capture --budget 6000",
-    "→ pagina wiki + 3 snippet di codice",
+    "$ becket context capture --task fix",
+    "→ pagina knowledge + snippet test",
     "→ 5 moduli nell'impact set",
-    "→ pronto per agente AI ✓",
+    "→ budget: 6k consigliati ✓",
   ],
 };
 

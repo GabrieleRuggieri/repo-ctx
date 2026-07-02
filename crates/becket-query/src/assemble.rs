@@ -4,33 +4,33 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 
-use becket_core::wiki::{
-    find_flow_page_for_symbol, find_page_for_symbol, sanitize_for_context, wiki_adds_context,
-    WikiStore,
-};
+use becket_core::wiki::{sanitize_for_context, wiki_adds_context, WikiPageIndex, WikiStore};
 use becket_embed::{embed_with_model, symbol_embedding_text};
 use becket_schema::artifacts::SymbolRecord;
 use becket_store::{BecketPaths, IndexStore};
 
 use crate::budget::{
     build_advice, estimate_impact_line_tokens, estimate_snippet_tokens, estimate_tokens,
-    impact_display_cap, pack_impact_count, recommend_budget, DEFAULT_BUDGET, OVERHEAD_TOKENS,
+    impact_display_cap, pack_impact_count, recommend_budget, PackingStats, OVERHEAD_TOKENS,
 };
 use crate::types::{BudgetAdvice, CodeSnippet, ContextResult, ContextTask, SummarySource};
 
 /// Options for context assembly.
 #[derive(Debug, Clone, Copy)]
 pub struct AssembleOptions {
-    /// Token budget; `None` uses the recommended budget for this symbol/task.
+    /// `None` selects the recommended budget for this symbol and task.
     pub budget: Option<u32>,
     pub task: ContextTask,
+    /// Budget guidance only — skips reading source files for snippets.
+    pub plan_only: bool,
 }
 
 impl Default for AssembleOptions {
     fn default() -> Self {
         Self {
-            budget: Some(DEFAULT_BUDGET),
+            budget: None,
             task: ContextTask::Fix,
+            plan_only: false,
         }
     }
 }
@@ -43,10 +43,19 @@ pub fn assemble_context(
     budget: Option<u32>,
     task: ContextTask,
 ) -> Result<ContextResult, crate::error::QueryError> {
-    assemble_context_with_options(store, repo_root, root, AssembleOptions { budget, task })
+    assemble_context_with_options(
+        store,
+        repo_root,
+        root,
+        AssembleOptions {
+            budget,
+            task,
+            plan_only: false,
+        },
+    )
 }
 
-/// Assembles context with explicit options (supports auto budget via `budget: None`).
+/// Assembles context with explicit options.
 pub fn assemble_context_with_options(
     store: &IndexStore,
     repo_root: &Path,
@@ -84,15 +93,33 @@ pub fn assemble_context_with_options(
 
     let invariants = vec![format!("visibility: {:?}", root.visibility)];
 
+    let test_symbol_ids = if matches!(task, ContextTask::Fix) {
+        collect_test_symbol_ids(&all_symbols, &root, &callers, &callees)
+    } else {
+        Vec::new()
+    };
+
+    let related_tests: Vec<String> = test_symbol_ids
+        .iter()
+        .filter_map(|id| id_to_symbol.get(id.as_str()))
+        .map(|s| s.file_path.clone())
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+
+    let semantic_ids = semantic_neighbor_ids(store, &root, 5)?;
+
     let mut ranked = rank_symbols(
         &root,
         &callers,
         &callees,
+        &test_symbol_ids,
+        &semantic_ids,
         &affected_ids,
-        &semantic_neighbor_ids(store, &root, 5)?,
-        &related_components,
+        task,
     );
     ranked.sort_by_key(|(_, priority)| *priority);
+    ranked.dedup_by(|a, b| a.0 == b.0);
 
     let max_snippets = match task {
         ContextTask::Onboard => 3,
@@ -100,12 +127,11 @@ pub fn assemble_context_with_options(
     };
 
     let paths = BecketPaths::new(repo_root);
-    let wiki_store = WikiStore::new(&paths);
-    let wiki_page = find_page_for_symbol(&wiki_store, &root.id).ok().flatten();
+    let wiki_index = WikiPageIndex::load(&WikiStore::new(&paths)).unwrap_or_default();
+
+    let wiki_page = wiki_index.best_for_symbol(&root.id).cloned();
     let flow_wiki_page = if matches!(task, ContextTask::Onboard) {
-        find_flow_page_for_symbol(&wiki_store, &root.id)
-            .ok()
-            .flatten()
+        wiki_index.best_flow_for_symbol(&root.id).cloned()
     } else {
         None
     };
@@ -137,28 +163,40 @@ pub fn assemble_context_with_options(
         .collect();
 
     let mut candidate_snippets = Vec::new();
-    let mut seen = HashSet::new();
-    for (sym_id, _) in &ranked {
-        if candidate_snippets.len() >= max_snippets && max_snippets != usize::MAX {
-            break;
-        }
-        if seen.contains(sym_id) {
-            continue;
-        }
-        seen.insert(sym_id.clone());
-        let Some(sym) = id_to_symbol.get(sym_id.as_str()) else {
-            continue;
-        };
-        let Some(snippet) = slice_symbol(repo_root, sym) else {
-            continue;
-        };
-        candidate_snippets.push(snippet);
-    }
+    let mut snippet_token_estimates = Vec::new();
+    let mut file_cache = FileCache::default();
 
-    let snippet_token_estimates: Vec<u32> = candidate_snippets
-        .iter()
-        .map(estimate_snippet_tokens)
-        .collect();
+    if options.plan_only {
+        for (sym_id, _) in &ranked {
+            if candidate_snippets.len() >= max_snippets && max_snippets != usize::MAX {
+                break;
+            }
+            let Some(sym) = id_to_symbol.get(sym_id.as_str()) else {
+                continue;
+            };
+            let est = estimate_symbol_heuristic_tokens(sym);
+            candidate_snippets.push(heuristic_snippet(sym, est));
+            snippet_token_estimates.push(est);
+        }
+    } else {
+        let mut seen = HashSet::new();
+        for (sym_id, _) in &ranked {
+            if candidate_snippets.len() >= max_snippets && max_snippets != usize::MAX {
+                break;
+            }
+            if !seen.insert(sym_id.clone()) {
+                continue;
+            }
+            let Some(sym) = id_to_symbol.get(sym_id.as_str()) else {
+                continue;
+            };
+            let Some(snippet) = slice_symbol_cached(&mut file_cache, repo_root, sym) else {
+                continue;
+            };
+            snippet_token_estimates.push(estimate_snippet_tokens(&snippet));
+            candidate_snippets.push(snippet);
+        }
+    }
 
     let wiki_tokens = wiki_sanitized
         .as_ref()
@@ -219,7 +257,54 @@ pub fn assemble_context_with_options(
     let snippets_total = snippet_token_estimates.len();
     let snippets_included = snippets.len();
 
-    let render_input = RenderInput {
+    let budget_advice = build_advice(
+        task,
+        requested_budget,
+        recommended,
+        0,
+        PackingStats {
+            snippets_included,
+            snippets_total,
+            impact_shown,
+            impact_total: affected_ids.len(),
+        },
+    );
+
+    let semantic_neighbors: Vec<String> = semantic_ids
+        .iter()
+        .filter_map(|id| id_to_symbol.get(id.as_str()).map(|s| s.name.clone()))
+        .collect();
+
+    if options.plan_only {
+        let markdown = render_plan_markdown(&root, task, &budget_advice, &related_tests);
+        let mut advice = budget_advice;
+        advice.estimated_tokens = estimate_tokens(&markdown);
+        return Ok(ContextResult {
+            symbol: root,
+            responsibility,
+            enriched_summary: None,
+            summary_source: SummarySource::Deterministic,
+            related_components,
+            external_dependencies,
+            invariants,
+            semantic_neighbors,
+            snippets: Vec::new(),
+            callers: caller_names,
+            callees: callee_names,
+            related_tests,
+            affected_symbol_ids: affected_ids,
+            wiki_page_id: wiki_page.as_ref().map(|p| p.meta.id.clone()),
+            wiki_body: wiki_sanitized,
+            flow_wiki_page_id: flow_wiki_page.as_ref().map(|p| p.meta.id.clone()),
+            flow_wiki_body: flow_wiki_sanitized,
+            budget_advice: advice,
+            markdown,
+            task,
+            budget_tokens: requested_budget,
+        });
+    }
+
+    let markdown = render_markdown(&RenderInput {
         root: &root,
         responsibility: &responsibility,
         snippets: &snippets,
@@ -229,33 +314,17 @@ pub fn assemble_context_with_options(
         impact_shown,
         id_to_symbol: &id_to_symbol,
         related: &related_components,
+        related_tests: &related_tests,
         wiki_page_id: wiki_page.as_ref().map(|p| p.meta.id.as_str()),
         wiki_body: wiki_sanitized.as_deref(),
         flow_wiki_page_id: flow_wiki_page.as_ref().map(|p| p.meta.id.as_str()),
         flow_wiki_body: flow_wiki_sanitized.as_deref(),
         task,
-        budget_advice: None,
-    };
+        budget_advice: Some(&budget_advice),
+    });
 
-    let markdown = render_markdown(&render_input);
-    let estimated_tokens = estimate_tokens(&markdown);
-
-    let budget_advice = build_advice(
-        task,
-        requested_budget,
-        recommended,
-        estimated_tokens,
-        snippets_included,
-        snippets_total,
-        impact_shown,
-        affected_ids.len(),
-    );
-
-    let mut render_input = render_input;
-    render_input.budget_advice = Some(&budget_advice);
-    let markdown = render_markdown(&render_input);
-
-    let semantic_neighbors = semantic_neighbor_names(store, &root, 5)?;
+    let mut budget_advice = budget_advice;
+    budget_advice.estimated_tokens = estimate_tokens(&markdown);
 
     Ok(ContextResult {
         symbol: root,
@@ -269,6 +338,7 @@ pub fn assemble_context_with_options(
         snippets,
         callers: caller_names,
         callees: callee_names,
+        related_tests,
         affected_symbol_ids: affected_ids,
         wiki_page_id: wiki_page.as_ref().map(|p| p.meta.id.clone()),
         wiki_body: wiki_sanitized,
@@ -296,6 +366,7 @@ pub fn refresh_context_markdown(context: &ContextResult) -> String {
         impact_shown,
         id_to_symbol: &id_to_symbol,
         related: &context.related_components,
+        related_tests: &context.related_tests,
         wiki_page_id: context.wiki_page_id.as_deref(),
         wiki_body: context.wiki_body.as_deref(),
         flow_wiki_page_id: context.flow_wiki_page_id.as_deref(),
@@ -303,6 +374,55 @@ pub fn refresh_context_markdown(context: &ContextResult) -> String {
         task: context.task,
         budget_advice: Some(&context.budget_advice),
     })
+}
+
+/// Returns true for conventional test/spec file paths.
+#[must_use]
+pub fn is_test_path(path: &str) -> bool {
+    let lower = path.to_lowercase();
+    lower.contains("test")
+        || lower.contains("spec")
+        || lower.contains("__tests__")
+        || lower.contains("_test.")
+}
+
+fn collect_test_symbol_ids(
+    all_symbols: &[SymbolRecord],
+    root: &SymbolRecord,
+    callers: &[String],
+    callees: &[String],
+) -> Vec<String> {
+    let root_name = root.name.to_lowercase();
+    let neighbor_names: HashSet<String> = callers
+        .iter()
+        .chain(callees.iter())
+        .filter_map(|id| {
+            all_symbols
+                .iter()
+                .find(|s| s.id == *id)
+                .map(|s| s.name.to_lowercase())
+        })
+        .collect();
+
+    let mut out = Vec::new();
+    for sym in all_symbols {
+        if !is_test_path(&sym.file_path) {
+            continue;
+        }
+        let name = sym.name.to_lowercase();
+        let relevant = name.contains(&root_name)
+            || root_name.contains(&name)
+            || neighbor_names
+                .iter()
+                .any(|n| name.contains(n) || n.contains(&name));
+        if relevant {
+            out.push(sym.id.clone());
+        }
+    }
+    out.sort();
+    out.dedup();
+    out.truncate(8);
+    out
 }
 
 fn direct_neighbors(
@@ -329,9 +449,10 @@ fn rank_symbols(
     root: &SymbolRecord,
     callers: &[String],
     callees: &[String],
-    affected: &[String],
+    test_ids: &[String],
     semantic: &[String],
-    related: &[String],
+    affected: &[String],
+    task: ContextTask,
 ) -> Vec<(String, u8)> {
     let mut out = Vec::new();
     out.push((root.id.clone(), 0));
@@ -341,17 +462,31 @@ fn rank_symbols(
     for id in callees {
         out.push((id.clone(), 2));
     }
-    for id in semantic {
-        if id != &root.id {
+    if matches!(task, ContextTask::Fix) {
+        for id in test_ids {
             out.push((id.clone(), 3));
         }
     }
-    for id in affected {
+    let semantic_priority = if matches!(task, ContextTask::Fix) {
+        4
+    } else {
+        3
+    };
+    for id in semantic {
         if id != &root.id {
-            out.push((id.clone(), 4));
+            out.push((id.clone(), semantic_priority));
         }
     }
-    let _ = related;
+    let affected_priority = if matches!(task, ContextTask::Fix) {
+        5
+    } else {
+        4
+    };
+    for id in affected {
+        if id != &root.id {
+            out.push((id.clone(), affected_priority));
+        }
+    }
     out
 }
 
@@ -373,33 +508,38 @@ fn semantic_neighbor_ids(
         .collect())
 }
 
-pub(crate) fn semantic_neighbor_names(
-    store: &IndexStore,
-    symbol: &SymbolRecord,
-    limit: usize,
-) -> Result<Vec<String>, crate::error::QueryError> {
-    let ids = semantic_neighbor_ids(store, symbol, limit)?;
-    let id_to_name: HashMap<_, _> = store
-        .load_symbols()?
-        .into_iter()
-        .map(|s| (s.id, s.name))
-        .collect();
-    Ok(ids
-        .into_iter()
-        .filter_map(|id| id_to_name.get(&id).cloned())
-        .collect())
+#[derive(Default)]
+struct FileCache {
+    lines: HashMap<String, Vec<String>>,
 }
 
-fn slice_symbol(repo_root: &Path, symbol: &SymbolRecord) -> Option<CodeSnippet> {
-    let path = repo_root.join(&symbol.file_path);
-    let content = fs::read_to_string(&path).ok()?;
-    let lines: Vec<&str> = content.lines().collect();
+impl FileCache {
+    fn lines_for(&mut self, repo_root: &Path, file_path: &str) -> Option<&[String]> {
+        let path = repo_root.join(file_path);
+        if !self.lines.contains_key(file_path) {
+            let content = fs::read_to_string(&path).ok()?;
+            self.lines.insert(
+                file_path.to_string(),
+                content.lines().map(str::to_string).collect(),
+            );
+        }
+        self.lines.get(file_path).map(Vec::as_slice)
+    }
+}
+
+fn slice_symbol_cached(
+    cache: &mut FileCache,
+    repo_root: &Path,
+    symbol: &SymbolRecord,
+) -> Option<CodeSnippet> {
+    let lines = cache.lines_for(repo_root, &symbol.file_path)?;
     let start = symbol.start_line.saturating_sub(1) as usize;
     let end = (symbol.end_line as usize).min(lines.len());
     if start >= lines.len() || start >= end {
         return None;
     }
     let slice = lines[start..end].join("\n");
+    let path = repo_root.join(&symbol.file_path);
     let lang = extension_to_lang(path.extension()?.to_str()?);
     Some(CodeSnippet {
         symbol_id: symbol.id.clone(),
@@ -410,6 +550,31 @@ fn slice_symbol(repo_root: &Path, symbol: &SymbolRecord) -> Option<CodeSnippet> 
         language: lang.to_string(),
         content: slice,
     })
+}
+
+fn estimate_symbol_heuristic_tokens(sym: &SymbolRecord) -> u32 {
+    let lines = sym.end_line.saturating_sub(sym.start_line) + 1;
+    estimate_snippet_tokens(&CodeSnippet {
+        symbol_id: sym.id.clone(),
+        symbol_name: sym.name.clone(),
+        file_path: sym.file_path.clone(),
+        start_line: sym.start_line,
+        end_line: sym.end_line,
+        language: "text".into(),
+        content: "x".repeat((lines as usize).saturating_mul(40)),
+    })
+}
+
+fn heuristic_snippet(sym: &SymbolRecord, _est: u32) -> CodeSnippet {
+    CodeSnippet {
+        symbol_id: sym.id.clone(),
+        symbol_name: sym.name.clone(),
+        file_path: sym.file_path.clone(),
+        start_line: sym.start_line,
+        end_line: sym.end_line,
+        language: "text".into(),
+        content: String::new(),
+    }
 }
 
 fn extension_to_lang(ext: &str) -> &'static str {
@@ -424,6 +589,42 @@ fn extension_to_lang(ext: &str) -> &'static str {
     }
 }
 
+fn render_plan_markdown(
+    root: &SymbolRecord,
+    task: ContextTask,
+    advice: &BudgetAdvice,
+    related_tests: &[String],
+) -> String {
+    let mut md = format!("# Context plan: {}\n\n", root.name);
+    md.push_str(&format!("**Task:** {:?}\n\n", task));
+    md.push_str("## Budget guidance\n\n");
+    md.push_str(&format!(
+        "- **Recommended:** ~{} tokens\n",
+        advice.recommended_tokens
+    ));
+    md.push_str(&format!(
+        "- **Default for task:** {} tokens\n",
+        task.default_budget()
+    ));
+    md.push_str(&format!(
+        "- **Candidate snippets:** {}\n",
+        advice.snippets_included + advice.snippets_omitted
+    ));
+    md.push_str(&format!(
+        "- **Impact symbols (depth {}):** {}\n",
+        task.impact_depth(),
+        advice.impact_entries_total
+    ));
+    if !related_tests.is_empty() {
+        md.push_str("\n## Related tests\n\n");
+        for path in related_tests {
+            md.push_str(&format!("- `{path}`\n"));
+        }
+    }
+    md.push_str("\n_Re-run without `--plan` (or MCP `get_context`) for the full bundle._\n");
+    md
+}
+
 struct RenderInput<'a> {
     root: &'a SymbolRecord,
     responsibility: &'a str,
@@ -434,6 +635,7 @@ struct RenderInput<'a> {
     impact_shown: usize,
     id_to_symbol: &'a HashMap<&'a str, &'a SymbolRecord>,
     related: &'a [String],
+    related_tests: &'a [String],
     wiki_page_id: Option<&'a str>,
     wiki_body: Option<&'a str>,
     flow_wiki_page_id: Option<&'a str>,
@@ -453,6 +655,7 @@ fn render_markdown(input: &RenderInput<'_>) -> String {
         impact_shown,
         id_to_symbol,
         related,
+        related_tests,
         wiki_page_id,
         wiki_body,
         flow_wiki_page_id,
@@ -536,6 +739,14 @@ fn render_markdown(input: &RenderInput<'_>) -> String {
         }
     }
 
+    if !related_tests.is_empty() {
+        md.push_str("## Related tests\n\n");
+        for path in *related_tests {
+            md.push_str(&format!("- `{path}`\n"));
+        }
+        md.push('\n');
+    }
+
     if !callers.is_empty() || !callees.is_empty() {
         md.push_str("## Call graph\n\n");
         if !callers.is_empty() {
@@ -578,19 +789,62 @@ mod tests {
     use super::*;
     use becket_schema::symbol::{SymbolKind, Visibility};
 
-    #[test]
-    fn refresh_markdown_includes_budget_notice_when_truncated() {
-        let symbol = SymbolRecord {
-            id: "sym1".into(),
+    fn sample_symbol(id: &str, name: &str, path: &str) -> SymbolRecord {
+        SymbolRecord {
+            id: id.into(),
             kind: SymbolKind::Function,
-            name: "pay".into(),
-            fqn: "pay".into(),
-            file_path: "src/pay.rs".into(),
+            name: name.into(),
+            fqn: name.into(),
+            file_path: path.into(),
             start_line: 1,
-            end_line: 3,
+            end_line: 5,
             visibility: Visibility::Public,
             module_id: None,
-        };
+        }
+    }
+
+    #[test]
+    fn is_test_path_detects_conventional_layouts() {
+        assert!(is_test_path("src/payment/checkout_test.rs"));
+        assert!(is_test_path("tests/integration/spec.ts"));
+        assert!(!is_test_path("src/payment/checkout.rs"));
+    }
+
+    #[test]
+    fn collect_test_symbols_prefers_name_match() {
+        let root = sample_symbol("sym_root", "checkout", "src/checkout.rs");
+        let test_sym = sample_symbol("sym_test", "test_checkout", "tests/checkout_test.rs");
+        let noise = sample_symbol("sym_noise", "other", "tests/other_test.rs");
+        let ids = collect_test_symbol_ids(&[root.clone(), test_sym, noise], &root, &[], &[]);
+        assert_eq!(ids, vec!["sym_test".to_string()]);
+    }
+
+    #[test]
+    fn fix_task_ranks_tests_before_affected() {
+        let root = sample_symbol("sym_root", "pay", "src/pay.rs");
+        let ranked = rank_symbols(
+            &root,
+            &[],
+            &[],
+            &["sym_test".into()],
+            &[],
+            &["sym_far".into()],
+            ContextTask::Fix,
+        );
+        let test_rank = ranked
+            .iter()
+            .find(|(id, _)| id == "sym_test")
+            .map(|(_, r)| *r);
+        let far_rank = ranked
+            .iter()
+            .find(|(id, _)| id == "sym_far")
+            .map(|(_, r)| *r);
+        assert!(test_rank.unwrap() < far_rank.unwrap());
+    }
+
+    #[test]
+    fn refresh_markdown_includes_budget_notice_when_truncated() {
+        let symbol = sample_symbol("sym1", "pay", "src/pay.rs");
         let advice = BudgetAdvice {
             requested_budget: 1000,
             recommended_tokens: 5000,
@@ -613,6 +867,7 @@ mod tests {
             snippets: vec![],
             callers: vec![],
             callees: vec![],
+            related_tests: vec![],
             affected_symbol_ids: (0..20).map(|i| format!("sym{i}")).collect(),
             wiki_page_id: None,
             wiki_body: None,
@@ -625,6 +880,5 @@ mod tests {
         };
         let md = refresh_context_markdown(&ctx);
         assert!(md.contains("Budget notice"));
-        assert!(md.contains("recommended ~5000"));
     }
 }

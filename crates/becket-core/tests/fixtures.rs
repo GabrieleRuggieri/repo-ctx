@@ -280,6 +280,7 @@ fn context_auto_budget_uses_recommendation() {
             becket_query::AssembleOptions {
                 budget: None,
                 task: becket_query::ContextTask::Fix,
+                plan_only: false,
             },
         )
         .expect("context");
@@ -288,6 +289,64 @@ fn context_auto_budget_uses_recommendation() {
         ctx.budget_tokens, ctx.budget_advice.recommended_tokens,
         "auto budget should match recommendation"
     );
+}
+
+#[test]
+fn context_plan_skips_source_reads() {
+    let work = isolated_fixture("flows-payment");
+    BuildPipeline::new(
+        &work.root,
+        BuildOptions {
+            incremental: false,
+            no_embeddings: true,
+        },
+    )
+    .run()
+    .expect("build");
+
+    let engine = QueryEngine::new(&work.root);
+    let ctx = engine
+        .context_with_options(
+            "checkout",
+            becket_query::AssembleOptions {
+                budget: None,
+                task: becket_query::ContextTask::Fix,
+                plan_only: true,
+            },
+        )
+        .expect("plan");
+
+    assert!(ctx.markdown.contains("Context plan"));
+    assert!(ctx.snippets.is_empty());
+    assert!(ctx.budget_advice.recommended_tokens > 0);
+}
+
+#[test]
+fn context_fix_includes_test_file_when_present() {
+    let work = isolated_fixture("flows-payment");
+    BuildPipeline::new(
+        &work.root,
+        BuildOptions {
+            incremental: false,
+            no_embeddings: true,
+        },
+    )
+    .run()
+    .expect("build");
+
+    let engine = QueryEngine::new(&work.root);
+    let ctx = engine
+        .context("checkout", Some(12_000), becket_query::ContextTask::Fix)
+        .expect("context");
+
+    assert!(
+        !ctx.related_tests.is_empty() || ctx.snippets.iter().any(|s| is_test_path(&s.file_path)),
+        "fix task should surface test paths or snippets when tests exist"
+    );
+}
+
+fn is_test_path(path: &str) -> bool {
+    becket_query::assemble::is_test_path(path)
 }
 
 #[test]

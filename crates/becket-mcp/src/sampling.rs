@@ -4,7 +4,7 @@ use std::path::Path;
 
 use becket_core::redact_secrets;
 use becket_core::wiki::{
-    extract_prose_content, replace_prose_slot, sanitize_for_context, wiki_adds_context, WikiStore,
+    needs_prose_enrichment, replace_prose_slot, sanitize_for_context, wiki_adds_context, WikiStore,
     PROSE_SLOT,
 };
 use becket_query::assemble::refresh_context_markdown;
@@ -72,12 +72,15 @@ pub async fn apply_context_enrichment(
 
     if let Some(page_id) = context.wiki_page_id.clone() {
         if let Ok(Some(page)) = wiki_store.load_page(&page_id) {
-            let enriched = enrich_wiki_prose(peer, repo_root, page).await;
-            let sanitized = sanitize_for_context(&enriched.body);
-            if wiki_adds_context(&sanitized) {
-                context.wiki_body = Some(sanitized);
-                context.enriched_summary = extract_prose_content(&enriched.body);
-                context.summary_source = SummarySource::McpSampling;
+            if needs_prose_enrichment(&page.body) {
+                let enriched = enrich_wiki_prose(peer, repo_root, page).await;
+                let sanitized = sanitize_for_context(&enriched.body);
+                if wiki_adds_context(&sanitized) {
+                    context.wiki_body = Some(sanitized);
+                    context.enriched_summary =
+                        becket_core::wiki::extract_prose_content(&enriched.body);
+                    context.summary_source = SummarySource::McpSampling;
+                }
             }
         }
     }
@@ -85,10 +88,12 @@ pub async fn apply_context_enrichment(
     if matches!(context.task, becket_query::ContextTask::Onboard) {
         if let Some(flow_id) = context.flow_wiki_page_id.clone() {
             if let Ok(Some(page)) = wiki_store.load_page(&flow_id) {
-                let enriched = enrich_wiki_prose(peer, repo_root, page).await;
-                let sanitized = sanitize_for_context(&enriched.body);
-                if wiki_adds_context(&sanitized) {
-                    context.flow_wiki_body = Some(sanitized);
+                if needs_prose_enrichment(&page.body) {
+                    let enriched = enrich_wiki_prose(peer, repo_root, page).await;
+                    let sanitized = sanitize_for_context(&enriched.body);
+                    if wiki_adds_context(&sanitized) {
+                        context.flow_wiki_body = Some(sanitized);
+                    }
                 }
             }
         }
@@ -120,7 +125,10 @@ pub async fn enrich_wiki_prose(
     repo_root: &Path,
     mut page: becket_schema::wiki::WikiPage,
 ) -> becket_schema::wiki::WikiPage {
-    if !client_supports_sampling(peer) || !page.body.contains(PROSE_SLOT) {
+    if !client_supports_sampling(peer) {
+        return page;
+    }
+    if !page.body.contains(PROSE_SLOT) || !needs_prose_enrichment(&page.body) {
         return page;
     }
 
